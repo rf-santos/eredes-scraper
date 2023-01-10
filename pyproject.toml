@@ -1,0 +1,23 @@
+[build-system]
+requires = [ "setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "EredesScraper"
+authors = [{name = "Ricardo F. dos Santos", email = "ricardofilipecdsantos@gmail.com"}]
+description = "Selenium-based web scraper for E-Redes website"
+readme = "README.md"
+keywords = ["scraper", "e-redes", "eredes", "web-scraping", "selenium"]
+license = {text = "MIT License"}
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.10",
+]
+dynamic = ["version", "dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = "requirements-dev.txt"}
+version = {attr = "EredesScraper.__version__"}
