@@ -17,17 +17,26 @@ class EredesDriver:
     def __init__(self):
         super().__init__()
 
+        # Init attributes
+        self.tmp = None        
+        ## Initialize ChromeDriver options
+        self.chrome_options = webdriver.ChromeOptions()
+        self.driver = None
+        self.config = {}
+        self.log = None
+        self.headless = True
+
         # Create a staging area for the ChromeDriver
         Path.mkdir(Path.cwd() / 'tmp', exist_ok=True)
         self.tmp = Path.cwd() / 'tmp'
 
-        # Initialize ChromeDriver options
-        self.chrome_options = webdriver.ChromeOptions()
-
-        # Headless options
-        # self.chrome_options.add_argument('--headless')
-        # self.chrome_options.add_argument('--no-sandbox')
-        # self.chrome_options.add_argument('--disable-dev-shm-usage')
+        if self.headless:
+            self.chrome_options.add_argument("--headless")
+            self.chrome_options.add_argument('--no-sandbox')
+            self.chrome_options.add_argument('--disable-dev-shm-usage')
+            self.chrome_options.add_argument('--incognito')
+        else:
+            self.chrome_options.add_argument('--incognito')
 
         # Modify the ChromeDriverManager to use the staging area
         dl_path = ''
@@ -47,7 +56,8 @@ class EredesDriver:
         )
 
         # Parse the config file
-        if os.path.isfile('config'):
+        # Check if config file in current directory
+        if Path('config').exists():
             self.config = parse_config('config')
             assert self.config, "Config file is empty"
         else:
@@ -91,9 +101,6 @@ class EredesDriver:
                                      "/html/body/app-root/nz-layout/app-default/main/nz-content/div/div[2]/section["
                                      "1]/app-sign-in/div/div/form/div[2]/div/button/span").click()
 
-            wait(self.driver, 10).until(
-                lambda x: x.execute_script("return document.readyState === 'complete'")
-            )
             # Verify that the login was successful.
             error_message = "Incorrect username or password."
             # Retrieve any errors found.
