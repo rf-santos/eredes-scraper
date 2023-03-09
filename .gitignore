@@ -1,2 +1,3 @@
 *.ipynb
 .idea
+src/EredesScraper/config
