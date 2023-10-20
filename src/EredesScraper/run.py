@@ -1,19 +1,16 @@
-from time import sleep
-from selenium.webdriver.support.ui import WebDriverWait as wait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
-import os
+# package imports
+from eredes_scraper import EredesScraper
+from utils import parse_config
+from pathlib import Path
+from db_clients import InfluxDB
 
-from eredes_agent import EredesDriver
+config = parse_config()      # specify the path to the config.yml file if different from default
 
-bot = EredesDriver()
+bot = EredesScraper()
+bot.setup()
+bot.current_month_consumption()
+bot.teardown()
 
-bot.headless = False
-
-bot.driver.get(bot.config['EREDES_CONSUMPTION_STREAM_URL'])
-
-sleep(20)
-
-bot.login_private_user()
-
-bot.driver.quit()
+db = InfluxDB()
+db.connect()
+db.load(source_data=bot.dwnl_file)

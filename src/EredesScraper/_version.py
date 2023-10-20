@@ -78,7 +78,7 @@ def get_version():
 
     # Fallback to a hard-coded version number of installed package
     else:
-        output = subprocess.check_output(['pip', 'show', 'AcodisApiHandler'])
+        output = subprocess.check_output(['pip', 'show', 'EredesScraper'])
         for elem in output.decode("utf-8").replace("\r", "").split("\n"):
             if "version" in elem:
                 version = elem.split(":")[-1].strip()

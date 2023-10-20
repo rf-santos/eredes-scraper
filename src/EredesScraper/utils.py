@@ -1,8 +1,52 @@
-from astrapy.rest import create_client, http_methods
-import uuid
-from os import environ
-import toml
+import os
+import time
 from collections.abc import MutableMapping
+
+import pandas as pd
+from pathlib import Path
+import yaml
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+
+
+def parse_monthly_consumptions(file_path: Path, cpe_code: str) -> pd.DataFrame:
+    """
+    The parse_file function takes a XLSX file path retrieved from E-REDES and returns
+    a pandas DataFrame with the parsed data.
+    An example for the retrieved file can be found in the `tests` folder.
+    TZ is set to Europe/Lisbon
+    Parsing rules:
+    - The first 7 lines are skipped
+    - The table has 3 columns: Date, Time and Value
+    - The Date is "date", the Time is "time", the Value is "consumption"
+    - The "date" and "time" columns are merged into a single column named "date_time"
+
+    :param file_path: Specify the Excel (.XLSX) file path of the file to be parsed
+    :type file_path: pathlib.Path
+    :param cpe_code: Specify the CPE code to be added to the DataFrame
+    :type cpe_code: str
+    :return: A pandas DataFrame with the parsed data
+    :doc-author: Ricardo Filipe dos Santos
+    """
+
+    df = pd.read_excel(
+        file_path,
+        skiprows=7,
+        parse_dates=[[0, 1]],
+        names=['date', 'time', 'consumption'],
+        dtype={'consumption': float},
+        decimal=',',
+        thousands='.'
+    )
+
+    # add the cpe code from the config file to all rows
+    df['cpe'] = cpe_code
+
+    # add the date_time column
+    df['date_time'] = df['date_time'].dt.tz_localize('Europe/Lisbon')
+    df.set_index('date_time', inplace=True)
+
+    return df
 
 
 def flatten(d, parent_key='', sep='.') -> dict:
@@ -48,32 +92,46 @@ def keys2env(d: dict, sep: str = '.', keep_level: int = -1) -> dict:
     return items
 
 
-def parse_config(config_file=None):
+# function to parse the config.yml file and load it into a dictionary
+def parse_config(config_path: Path = Path.cwd() / "config.yml") -> dict:
     """
-    The parse_config function reads the config file and returns a dictionary with all the configuration parameters.
+    The parse_config function parses the config.yml file and returns a dictionary with the parsed data.
 
-
-    :return: A dictionary with the configuration parameters
+    :param config_path: Specify the path to the config.yml file
+    :type config_path: pathlib.Path
+    :return: A dictionary with the parsed data from the config.yml file
     :doc-author: Ricardo Filipe dos Santos
     """
-    eredes_conf = {}
+    with open(config_path, "r") as f:
+        config = yaml.safe_load(f)
 
-    if config_file:
-        eredes_conf = keys2env(flatten(toml.load(config_file)))
-
-    return eredes_conf
+    return config
 
 
-def astra_conn(astra_config: dict):
-    ASTRA_DB_ID = astra_config['ASTRA_DB_ID']
-    ASTRA_DB_REGION = astra_config['ASTRA_DB_REGION']
-    ASTRA_DB_APPLICATION_TOKEN = astra_config['ASTRA_DB_APPLICATION_TOKEN']
-    # ASTRA_DB_KEYSPACE = astra_config['ASTRA_DB_KEYSPACE']
+def save_screenshot(driver: webdriver.Chrome, path: str = 'screenshot.png') -> None:
+    # Ref: https://stackoverflow.com/a/52572919/
+    original_size = driver.get_window_size()
+    required_width = driver.execute_script('return document.body.parentNode.scrollWidth')
+    required_height = driver.execute_script('return document.body.parentNode.scrollHeight')
+    driver.set_window_size(required_width, required_height)
+    # driver.save_screenshot(path)  # has scrollbar
+    driver.find_element(By.TAG_NAME, "body").screenshot(path)  # avoids scrollbar
+    driver.set_window_size(original_size['width'], original_size['height'])
 
-    astra_client = create_client(
-        astra_database_id=ASTRA_DB_ID,
-        astra_database_region=ASTRA_DB_REGION,
-        astra_application_token=ASTRA_DB_APPLICATION_TOKEN
-    )
 
-    return astra_client
+def wait_for_download(directory, timeout, nfiles=None):
+    seconds = 0
+    dl_wait = True
+    while dl_wait and seconds < timeout:
+        time.sleep(1)
+        dl_wait = False
+        files = os.listdir(directory)
+        if nfiles and len(files) != nfiles:
+            dl_wait = True
+
+        for fname in files:
+            if fname.endswith('.crdownload'):
+                dl_wait = True
+
+        seconds += 1
+    return seconds
