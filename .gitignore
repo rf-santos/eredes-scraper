@@ -1,5 +1,5 @@
 *.ipynb
 .idea
-src/EredesScraper/config
+EredesScraper/config
 *.yml
 tests

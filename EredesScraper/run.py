@@ -11,6 +11,11 @@ bot.setup()
 bot.current_month_consumption()
 bot.teardown()
 
-db = InfluxDB()
+db = InfluxDB(
+    token=config['influxdb']['token'],
+    org=config['influxdb']['org'],
+    host=config['influxdb']['host'],
+    port=config['influxdb']['port'],
+    bucket=config['influxdb']['bucket'])
 db.connect()
-db.load(source_data=bot.dwnl_file)
+db.load(source_data=bot.dwnl_file, cpe_code=config['eredes']['cpe'])
