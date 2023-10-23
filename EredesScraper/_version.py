@@ -13,7 +13,7 @@ def get_version():
     """
     Gets the current version number.
     If in a git repository, it is the current git tag.
-    Otherwise it is the one contained in the PKG-INFO file.
+    Otherwise, it is the one contained in the PKG-INFO file.
     To use this script, simply import it in your setup.py file
     and use the results of get_version() as your package version:
         from version import *
@@ -26,10 +26,10 @@ def get_version():
 
     global version
 
-    # Paths for package structure following best practices (https://docs.python-guide.org/writing/structure/
+    # Paths for package structure
     d = Path(dirname(__file__))
     src = d.parent
-    root = d.parent.parent
+    root = d.parent
 
     try:
         pkg = [p for p in src.iterdir() if p.is_dir() and 'egg-info' in p.name]
@@ -78,9 +78,9 @@ def get_version():
 
     # Fallback to a hard-coded version number of installed package
     else:
-        output = subprocess.check_output(['pip', 'show', 'AcodisApiHandler'])
+        output = subprocess.check_output(['pip', 'show', 'EredesScraper'])
         for elem in output.decode("utf-8").replace("\r", "").split("\n"):
-            if "version" in elem:
+            if "version" in elem.lower():
                 version = elem.split(":")[-1].strip()
                 break
     return version

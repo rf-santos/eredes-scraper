@@ -1,23 +1,25 @@
-[build-system]
-requires = [ "setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
-
-[project]
+[tool.poetry]
 name = "EredesScraper"
-authors = [{name = "Ricardo F. dos Santos", email = "ricardofilipecdsantos@gmail.com"}]
-description = "Selenium-based web scraper for E-Redes website"
+version = "0"
+description = "Selenium-based web scraper to extract data from e-Redes website and load it into database storage."
+authors = ["Ricardo Filipe dos Santos <ricardofilipecdsantos@gmail.com>"]
+license = "MIT"
 readme = "README.md"
-keywords = ["scraper", "e-redes", "eredes", "web-scraping", "selenium"]
-license = {text = "MIT License"}
-classifiers = [
-    "Development Status :: 3 - Alpha",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3.10",
-]
-dynamic = ["version", "dependencies"]
 
-[tool.setuptools.dynamic]
-dependencies = {file = "requirements-dev.txt"}
-version = {attr = "EredesScraper.__version__"}
+[tool.poetry.dependencies]
+python = ">=3.11,<3.13"
+influxdb-client = "^1.38.0"
+openpyxl = "^3.1.2"
+pandas = "^2.1.1"
+pyyaml = "^6.0.1"
+selenium = "^4.14.0"
+webdriver-manager = "^4.0.1"
+
+[tool.poetry-dynamic-versioning]
+enable = true
+vcs = "git"
+style = "semver"
+
+[build-system]
+requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
+build-backend = "poetry_dynamic_versioning.backend"
