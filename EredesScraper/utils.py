@@ -49,17 +49,20 @@ def parse_monthly_consumptions(file_path: Path, cpe_code: str) -> pd.DataFrame:
     return df
 
 
-def flatten(d, parent_key='', sep='.') -> dict:
+def flatten_config(d, parent_key='', sep='_') -> dict:
     """
-    The flatten function takes a dictionary and flattens it into a single level.
+    The flatten_config function takes a dictionary and flattens it into a single level.
     For example, if the input is:
     {'a': 1, 'b': {'x': 2, 'y': 3}, 'c': 4}
     then the output will be:
     {'a': 1, 'b.x': 2, 'b.y', 3 ,'c', 4}
 
     :param d: Pass the dictionary to be flattened
-    :param parent_key='': Keep track of the parent key
-    :param sep='.': Separate the keys in the nested dictionary
+    :type d: dict
+    :param parent_key: Keep track of the parent key
+    :type parent_key: str
+    :param sep: Separate the keys in the nested dictionary
+    :type sep: str
     :return: A dictionary with all the keys and values from a nested dictionary
     :doc-author: Ricardo Filipe dos Santos
     """
@@ -67,21 +70,25 @@ def flatten(d, parent_key='', sep='.') -> dict:
     for k, v in d.items():
         new_key = parent_key + sep + k if parent_key else k
         if isinstance(v, MutableMapping):
-            items.extend(flatten(v, new_key, sep=sep).items())
+            items.extend(flatten_config(v, new_key, sep=sep).items())
         else:
             items.append((new_key, v))
     return dict(items)
 
 
-def keys2env(d: dict, sep: str = '.', keep_level: int = -1) -> dict:
+def flatten_keys(d: dict, sep: str = '_', keep_level: int = -1) -> dict:
     """
-    The keys2env function takes a dictionary and returns a new dictionary with the keys split by the specified separator.
+    The flatten_keys function takes a dictionary and returns a new dictionary with the keys
+    split by the specified separator.
     The keep_level parameter specifies which list index to keep after key.split(),
     by default keeps last item of split.
 
-    :param d:dict: Specify the dictionary that is to be converted
-    :param sep:str='.': Split the key string into a list of substrings
-    :param keep_level:int=-1: Keep only the `keep_level` index of the split key name
+    :param d: Specify the dictionary that is to be converted
+    :type d: dict
+    :param sep: Split the key string into a list of substrings
+    :type sep: str
+    :param keep_level: Keep only the `keep_level` index of the split key name
+    :type keep_level: int
     :return: A dictionary with the modified keys of `d`
     :doc-author: Ricardo Filipe dos Santos
     """
@@ -135,3 +142,18 @@ def wait_for_download(directory, timeout, nfiles=None):
 
         seconds += 1
     return seconds
+
+
+def config2env(flat_config: dict):
+    """
+    The config2env function takes a dictionary and converts it to a string in the form of
+    `key=value` pairs, separated by a newline character. This is then exported to the environment
+    variables.
+
+    :param flat_config: Specify the dictionary to be converted
+    :type flat_config: dict
+    :return: None
+    :doc-author: Ricardo Filipe dos Santos
+    """
+    for k, v in flat_config.items():
+        os.environ[k.upper()] = str(v)
