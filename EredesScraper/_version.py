@@ -29,7 +29,7 @@ def get_version():
     # Paths for package structure following best practices (https://docs.python-guide.org/writing/structure/
     d = Path(dirname(__file__))
     src = d.parent
-    root = d.parent.parent
+    root = d.parent
 
     try:
         pkg = [p for p in src.iterdir() if p.is_dir() and 'egg-info' in p.name]

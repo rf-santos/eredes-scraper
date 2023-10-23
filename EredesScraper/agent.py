@@ -12,7 +12,7 @@ from selenium.webdriver.support.ui import WebDriverWait as wait
 from webdriver_manager.chrome import ChromeDriverManager
 
 # package imports
-from utils import wait_for_download, parse_config, save_screenshot
+from EredesScraper.utils import wait_for_download, parse_config, save_screenshot
 
 config = parse_config(Path.cwd() / 'config.yml')  # TODO: parametrize this
 

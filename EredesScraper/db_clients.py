@@ -1,5 +1,4 @@
 import datetime
-import sys
 from pathlib import Path
 
 import influxdb_client
@@ -8,7 +7,7 @@ from influxdb_client import WritePrecision
 from influxdb_client.client.exceptions import InfluxDBError
 from influxdb_client.client.write_api import SYNCHRONOUS
 
-from utils import parse_config, parse_monthly_consumptions
+from EredesScraper.utils import parse_monthly_consumptions
 
 
 class InfluxDB:

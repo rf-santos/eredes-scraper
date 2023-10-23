@@ -1,9 +1,9 @@
 import os
 import time
 from collections.abc import MutableMapping
+from pathlib import Path
 
 import pandas as pd
-from pathlib import Path
 import yaml
 from selenium import webdriver
 from selenium.webdriver.common.by import By

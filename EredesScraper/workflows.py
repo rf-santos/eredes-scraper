@@ -1,8 +1,9 @@
 # package imports
-from agent import EredesScraper
-from utils import parse_config
 from pathlib import Path
-from db_clients import InfluxDB
+
+from EredesScraper.agent import EredesScraper
+from EredesScraper.utils import parse_config
+from EredesScraper.db_clients import InfluxDB
 
 
 def run(workflow: str, config_path: Path):
@@ -11,7 +12,7 @@ def run(workflow: str, config_path: Path):
             print("Running current_month_consumption workflow")
             print(f"Using config file: {config_path}")
 
-            config = parse_config(config_path=config_path)  # specify the path to the config.yml file if different from default
+            config = parse_config(config_path=config_path)
 
             print(f"E-Redes client info: NIF: {config['eredes']['nif']}, CPE: {config['eredes']['cpe']}")
 
