@@ -120,6 +120,7 @@ class InfluxDB:
         try:
             source_data.unlink()
             Path.rmdir(Path.cwd() / 'tmp')
+            print(f"Removed the source data file and the staging area for the Scraper: {source_data.absolute()}")
         except PermissionError:
             print("Permission denied to remove the staging area for the Scraper")
 

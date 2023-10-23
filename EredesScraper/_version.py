@@ -6,8 +6,6 @@ from pathlib import Path
 
 version_re = re.compile('^Version: (.+)$', re.M)
 
-global version
-
 
 def get_version():
     # This program is placed into the public domain.
@@ -15,7 +13,7 @@ def get_version():
     """
     Gets the current version number.
     If in a git repository, it is the current git tag.
-    Otherwise it is the one contained in the PKG-INFO file.
+    Otherwise, it is the one contained in the PKG-INFO file.
     To use this script, simply import it in your setup.py file
     and use the results of get_version() as your package version:
         from version import *
@@ -26,7 +24,9 @@ def get_version():
         )
     """
 
-    # Paths for package structure following best practices (https://docs.python-guide.org/writing/structure/
+    global version
+
+    # Paths for package structure
     d = Path(dirname(__file__))
     src = d.parent
     root = d.parent
@@ -80,7 +80,7 @@ def get_version():
     else:
         output = subprocess.check_output(['pip', 'show', 'EredesScraper'])
         for elem in output.decode("utf-8").replace("\r", "").split("\n"):
-            if "version" in elem:
+            if "version" in elem.lower():
                 version = elem.split(":")[-1].strip()
                 break
     return version
