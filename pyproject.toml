@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "EredesScraper"
-version = "0.0.3"
+version = "0.0.4"
 description = "Selenium-based web scraper to extract data from e-Redes website and load it into database storage."
 authors = ["Ricardo Filipe dos Santos <ricardofilipecdsantos@gmail.com>"]
 license = "MIT"
