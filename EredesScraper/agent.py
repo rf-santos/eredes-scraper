@@ -12,9 +12,7 @@ from selenium.webdriver.support.ui import WebDriverWait as wait
 from webdriver_manager.chrome import ChromeDriverManager
 
 # package imports
-from EredesScraper.utils import wait_for_download, parse_config, save_screenshot
-
-config = parse_config(Path.cwd() / 'config.yml')  # TODO: parametrize this
+from EredesScraper.utils import wait_for_download, save_screenshot
 
 
 class ScraperFlowError(Exception):
@@ -22,7 +20,7 @@ class ScraperFlowError(Exception):
 
 
 class EredesScraper:
-    def __init__(self, nif=config['eredes']['nif'], password=config['eredes']['pwd'], cpe_code=config['eredes']['cpe']):
+    def __init__(self, nif, password, cpe_code):
         self.dwnl_file = None
         self.driver = None
         self.chrome_options = webdriver.ChromeOptions()
