@@ -6,6 +6,8 @@ from pathlib import Path
 
 version_re = re.compile('^Version: (.+)$', re.M)
 
+global version
+
 
 def get_version():
     # This program is placed into the public domain.
@@ -23,8 +25,6 @@ def get_version():
             ...
         )
     """
-
-    global version
 
     # Paths for package structure following best practices (https://docs.python-guide.org/writing/structure/
     d = Path(dirname(__file__))
