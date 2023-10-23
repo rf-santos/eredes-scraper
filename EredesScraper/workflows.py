@@ -16,7 +16,11 @@ def run(workflow: str, config_path: Path):
 
             print(f"E-Redes client info: NIF: {config['eredes']['nif']}, CPE: {config['eredes']['cpe']}")
 
-            bot = EredesScraper()
+            bot = EredesScraper(
+                nif=config['eredes']['nif'],
+                password=config['eredes']['pwd'],
+                cpe_code=config['eredes']['cpe']
+            )
             bot.setup()
             bot.current_month_consumption()
             bot.teardown()
