@@ -1,0 +1,16 @@
+eredes:
+  # eredes credentials
+  nif: <my-eredes-nif>
+  pwd: <my-eredes-password>
+  # CPE to monitor. e.g. PT00############04TW (where # is a digit). CPE can be found in your bill details
+  cpe: PT00############04TW
+
+influxdb:
+  # url to InfluxDB.  e.g. http://localhost or https://influxdb.my-domain.com
+  host: http://localhost
+  # default port is 8086
+  port: 8086
+  bucket: <my-influx-bucket>
+  org: <my-influx-org>
+  # access token with write access
+  token: <token>
