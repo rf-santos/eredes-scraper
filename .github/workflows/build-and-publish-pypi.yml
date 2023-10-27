@@ -17,9 +17,9 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v3
       with:
-        python-version: '3.x'
+        python-version: '3.11'
     - name: Publish With Poetry
       uses: celsiusnarhwal/poetry-publish@v2.0.4
       with:
-        token: ${{ secrets.PYPI_TOKEN }}
+        token: ${{ vars.PYPI_TOKEN }}
         build: true
