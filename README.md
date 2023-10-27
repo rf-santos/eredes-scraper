@@ -19,7 +19,7 @@ pip install EredesScraper
 
 ## Configuration
 Usage is based on a YAML configuration file.  
-A `config.yml` is used to specify the credentials for the E-REDES website and 
+A `config.yml` is used to specify the credentials for the E-REDES website and [Optionally] 
 the database connection. Currently, **only InfluxDB is supported** as a database sink.  
 
 ### Template `config.yml`:
@@ -44,15 +44,25 @@ influxdb:
 ```
 
 ## Usage
-### Example usage:
-```python
-from EredesScraper.workflows import run
+### :snake: Python script:
 
-run(workflow="current_month_consumption",
-    db="influxdb",
-    config_path="./config.yml")
+```python
+from EredesScraper.workflows import switchboard
+from pathlib import Path
+
+switchboard(name="current_month_consumption",
+            db="influxdb",
+            config_path=Path("./config.yml"))
 ```
 
+### :computer: CLI:
+```bash
+ers config load "/path/to/config.yml"
+
+ers run
+```
+
+## Limitations
 ### Available workflows:
 - `current_month_consumption`: Collects the current month consumption data from the E-REDES website.
 
@@ -62,12 +72,11 @@ run(workflow="current_month_consumption",
 ## Roadmap
 - [ ] Add support for other workflows.
 - [ ] Add support for other databases.
-- [ ] Build CLI.
+- [X] Build CLI.
 - [ ] Add tests.
 - [ ] Add CI/CD.
 - [ ] Add logging.
-- [ ] Add support for multiple CPEs.
-- [ ] Add support for multiple accounts.
+- [ ] Add runtime support for multiple CPEs.
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.

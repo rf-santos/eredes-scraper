@@ -3,6 +3,7 @@ from pathlib import Path
 
 import influxdb_client
 import pandas as pd
+import typer
 from influxdb_client import WritePrecision
 from influxdb_client.client.exceptions import InfluxDBError
 from influxdb_client.client.write_api import SYNCHRONOUS
@@ -90,9 +91,9 @@ class InfluxDB:
                                                          debug=self.debug,
                                                          enable_gzip=False)
         except InfluxDBError:
-            print("Error connecting to the InfluxDB database")
+            typer.echo("💥\tError connecting to the InfluxDB database")
         finally:
-            print(f"Connected to the InfluxDB database at {self.__url}")
+            typer.echo(f"🔗\tConnected to the InfluxDB database at {self.__url}")
 
         return None
 
@@ -120,11 +121,11 @@ class InfluxDB:
         try:
             source_data.unlink()
             Path.rmdir(Path.cwd() / 'tmp')
-            print(f"Removed the source data file and the staging area for the Scraper: {source_data.absolute()}")
+            typer.echo(f"💀\tRemoved the source data file and the staging area: {source_data}")
         except PermissionError:
-            print("Permission denied to remove the staging area for the Scraper")
+            typer.echo("💥\tPermission denied to remove the staging area for the Scraper")
 
-        print(f"Loaded data from {source_data} into the InfluxDB database")
+        typer.echo(f"✅\tLoaded data from {source_data} into the InfluxDB database")
 
         return None
 
