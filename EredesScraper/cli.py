@@ -1,4 +1,3 @@
-import pathlib
 from pathlib import Path
 from typing import Optional
 
@@ -47,10 +46,10 @@ def init():
 
 
 @app.command(help="Run the scraper workflow. Can directly load data onto supported databases.")
-def run(config: Annotated[Optional[pathlib.Path], typer.Argument()] = Path(appdir) / "cache" / "config.yml",
-        workflow: Annotated[Optional[str], typer.Argument()] = "current_month_consumption",
+def run(workflow: str = "current_month_consumption",
         db: Annotated[Optional[str], typer.Argument()] = None):
     """Run a workflow from a config file"""
+    config = Path(appdir) / "cache" / "config.yml"
     assert Path(config).exists(), f"Config file not found. Run {typer.style('ers config load </path/to/config.yml>', fg=typer.colors.GREEN)} to load it."
 
     if db is None:

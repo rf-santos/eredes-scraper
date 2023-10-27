@@ -137,7 +137,7 @@ class EredesScraper:
             # Selenium flow
             # Step # | name | target | value | comment
 
-            t1 = progress.add_task(description=" 🔐Loging in...", total=None)
+            t1 = progress.add_task(description=" 🔐 Loging in...", total=None)
             # 1 | open | /login |  |
             self.driver.get("https://balcaodigital.e-redes.pt/login")
 
@@ -162,7 +162,7 @@ class EredesScraper:
             )).click()
 
             progress.remove_task(t1)
-            t2 = progress.add_task(description=" 💡Finding your CPE...", total=None)
+            t2 = progress.add_task(description=" 💡 Finding your CPE...", total=None)
             # 8 | click | css=.card:nth-child(3) .highlights |  |
             wait(self.driver, 30).until(EC.presence_of_element_located(
                 (By.CSS_SELECTOR, ".card:nth-child(3) .highlights")
@@ -179,7 +179,7 @@ class EredesScraper:
             )).click()
 
             progress.remove_task(t2)
-            t3 = progress.add_task(description=" 📊Downloading your data...", total=None)
+            t3 = progress.add_task(description=" 📊 Downloading your data...", total=None)
             time.sleep(30)
             try:
                 element = self.driver.find_element(By.XPATH, "//strong[contains(text(), 'Exportar excel')]")
