@@ -4,6 +4,8 @@ import time
 from pathlib import Path
 from sys import platform
 
+import typer
+from rich.progress import Progress, SpinnerColumn, TextColumn
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
@@ -11,7 +13,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait as wait
 from webdriver_manager.chrome import ChromeDriverManager
 
-# package imports
 from EredesScraper.utils import wait_for_download, save_screenshot
 
 
@@ -128,64 +129,77 @@ class EredesScraper:
         self.driver.quit()
 
     def current_month_consumption(self):
-        # Selenium flow
-        # Step # | name | target | value | comment
+        with Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                transient=True,
+        ) as progress:
+            # Selenium flow
+            # Step # | name | target | value | comment
 
-        # 1 | open | /login |  |
-        self.driver.get("https://balcaodigital.e-redes.pt/login")
+            t1 = progress.add_task(description=" 🔐Loging in...", total=None)
+            # 1 | open | /login |  |
+            self.driver.get("https://balcaodigital.e-redes.pt/login")
 
-        # 2 | click | css=.ant-typography > .item > .highlights |  |
-        wait(self.driver, 30).until(EC.presence_of_element_located(
-            (By.CSS_SELECTOR, ".ant-typography > .item > .highlights")
-        )).click()
+            # 2 | click | css=.ant-typography > .item > .highlights |  |
+            wait(self.driver, 30).until(EC.presence_of_element_located(
+                (By.CSS_SELECTOR, ".ant-typography > .item > .highlights")
+            )).click()
 
-        # 3 | type | id=username |   |
-        self.driver.find_element(By.ID, "username").send_keys(f"{self.__nif}")
+            # 3 | type | id=username |   |
+            self.driver.find_element(By.ID, "username").send_keys(f"{self.__nif}")
 
-        # 4 | type | id=labelPassword |  |
-        self.driver.find_element(By.ID, "labelPassword").send_keys(f"{self.__password}")
+            # 4 | type | id=labelPassword |  |
+            self.driver.find_element(By.ID, "labelPassword").send_keys(f"{self.__password}")
 
-        # 5 | click | css=.login-actions |  |
-        self.driver.find_element(By.XPATH, "//span[contains(.,'Entrar')]").click()
-        time.sleep(5)
+            # 5 | click | css=.login-actions |  |
+            self.driver.find_element(By.XPATH, "//span[contains(.,'Entrar')]").click()
+            time.sleep(5)
 
-        # 7 | click | css=.card__myplaces .card-text |  |
-        wait(self.driver, 30).until(EC.presence_of_element_located(
-            (By.CSS_SELECTOR, ".card__myplaces .card-text")
-        )).click()
+            # 7 | click | css=.card__myplaces .card-text |  |
+            wait(self.driver, 30).until(EC.presence_of_element_located(
+                (By.CSS_SELECTOR, ".card__myplaces .card-text")
+            )).click()
 
-        # 8 | click | css=.card:nth-child(3) .highlights |  |
-        wait(self.driver, 30).until(EC.presence_of_element_located(
-            (By.CSS_SELECTOR, ".card:nth-child(3) .highlights")
-        )).click()
+            progress.remove_task(t1)
+            t2 = progress.add_task(description=" 💡Finding your CPE...", total=None)
+            # 8 | click | css=.card:nth-child(3) .highlights |  |
+            wait(self.driver, 30).until(EC.presence_of_element_located(
+                (By.CSS_SELECTOR, ".card:nth-child(3) .highlights")
+            )).click()
 
-        # 9 | click | css=.card:nth-child(1) > .item__title |  |
-        wait(self.driver, 30).until(EC.presence_of_element_located(
-            (By.CSS_SELECTOR, ".card:nth-child(1) > .item__title")
-        )).click()
+            # 9 | click | css=.card:nth-child(1) > .item__title |  |
+            wait(self.driver, 30).until(EC.presence_of_element_located(
+                (By.CSS_SELECTOR, ".card:nth-child(1) > .item__title")
+            )).click()
 
-        # 10 | click | css=.list:nth-child(2) > .block:nth-child(1) .card-tags |  |
-        wait(self.driver, 30).until(EC.presence_of_element_located(
-            (By.XPATH, f"//*[contains(text(),'{self.__cpe_code}')]")
-        )).click()
+            # 10 | click | css=.list:nth-child(2) > .block:nth-child(1) .card-tags |  |
+            wait(self.driver, 30).until(EC.presence_of_element_located(
+                (By.XPATH, f"//*[contains(text(),'{self.__cpe_code}')]")
+            )).click()
 
-        time.sleep(30)
-        try:
-            element = self.driver.find_element(By.XPATH, "//strong[contains(text(), 'Exportar excel')]")
-        except:
-            save_screenshot(self.driver, "screenshot.png")
-            raise ScraperFlowError("Failed to find the 'Exportar excel' element")
+            progress.remove_task(t2)
+            t3 = progress.add_task(description=" 📊Downloading your data...", total=None)
+            time.sleep(30)
+            try:
+                element = self.driver.find_element(By.XPATH, "//strong[contains(text(), 'Exportar excel')]")
+            except:
+                save_screenshot(self.driver, "screenshot.png")
+                raise ScraperFlowError("Failed to find the 'Exportar excel' element")
 
-        self.driver.execute_script("arguments[0].scrollIntoView();", element)
-        element.click()
+            self.driver.execute_script("arguments[0].scrollIntoView();", element)
+            element.click()
 
-        wait_for_download(self.tmp, 30)
+            wait_for_download(self.tmp, 30)
 
-        current_date = datetime.datetime.now().strftime("%Y%m%d")
-        assert f"Consumos_{current_date}.xlsx" in os.listdir(self.tmp), "Download failed"
-        
-        # store the downloaded file absolute path in a variable
-        self.dwnl_file = Path(self.tmp) / f"Consumos_{current_date}.xlsx"
+            current_date = datetime.datetime.now().strftime("%Y%m%d")
+            assert f"Consumos_{current_date}.xlsx" in os.listdir(self.tmp), "Download failed"
+
+            # store the downloaded file absolute path in a variable
+            self.dwnl_file = Path(self.tmp) / f"Consumos_{current_date}.xlsx"
+
+        progress.remove_task(t3)
+        typer.echo(f"📁Downloaded file: {self.dwnl_file}")
         
         return self.dwnl_file
         

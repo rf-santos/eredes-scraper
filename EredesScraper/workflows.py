@@ -1,17 +1,19 @@
 # package imports
 from pathlib import Path
 
+import typer
+
 from EredesScraper.agent import EredesScraper
-from EredesScraper.utils import parse_config
 from EredesScraper.db_clients import InfluxDB
+from EredesScraper.utils import parse_config
 
 
-def run(workflow: str, db: str, config_path: Path) -> None:
+def switchboard(name: str, db: str, config_path: Path) -> None:
     """
     The run function is the entry point.
 
-    :param workflow: str: Specify which workflow to run. One of: ``current_month_consumption``
-    :type workflow: str
+    :param name: str: Specify which workflow to run. One of: ``current_month_consumption``
+    :type name: str
     :param db: str: Specify which database to use. One of: ``influxdb``
     :type db: str
     :param config_path: Path: Specify the path to the config file
@@ -22,12 +24,13 @@ def run(workflow: str, db: str, config_path: Path) -> None:
 
     config = parse_config(config_path=config_path)
 
-    match workflow:
+    match name:
         case 'current_month_consumption':
-            print("Running current_month_consumption workflow")
-            print(f"Using config file: {config_path}")
+            typer.echo(f"🚀\tRunning {typer.style('current_month_consumption', fg=typer.colors.GREEN)} workflow")
 
-            print(f"E-Redes client info: NIF: {config['eredes']['nif']}, CPE: {config['eredes']['cpe']}")
+            typer.echo(f"📇\tE-REDES client info: "
+                       f"NIF: {typer.style(config['eredes']['nif'], fg=typer.colors.GREEN, bold=True)}, "
+                       f"CPE: {typer.style(config['eredes']['cpe'], fg=typer.colors.GREEN, bold=True)}")
 
             bot = EredesScraper(
                 nif=config['eredes']['nif'],
@@ -37,7 +40,9 @@ def run(workflow: str, db: str, config_path: Path) -> None:
             bot.setup()
             bot.current_month_consumption()
             bot.teardown()
-            print(f"Downloaded file: {bot.dwnl_file}")
+
+        case _:
+            typer.echo(f"??\tWorkflow {typer.style(name, fg=typer.colors.GREEN)} not supported")
 
     match db:
         case 'influxdb':
@@ -49,3 +54,9 @@ def run(workflow: str, db: str, config_path: Path) -> None:
                 bucket=config['influxdb']['bucket'])
             db.connect()
             db.load(source_data=bot.dwnl_file, cpe_code=config['eredes']['cpe'])
+
+        case '':
+            pass
+
+        case _:
+            typer.echo(f"??\tDatabase {typer.style(db, fg=typer.colors.GREEN)} not supported")
