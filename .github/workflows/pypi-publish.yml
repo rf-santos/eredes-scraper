@@ -24,7 +24,7 @@ jobs:
         poetry
         --user
     - name: Build a binary wheel and a source tarball
-      run: poetry build
+      run: poetry build --directory /home/runner/work/eredes-scraper/eredes-scraper
     - name: Store the distribution packages
       uses: actions/upload-artifact@v3
       with:
