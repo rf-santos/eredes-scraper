@@ -1,4 +1,3 @@
-import pathlib
 from pathlib import Path
 from typing import Optional
 
@@ -7,14 +6,14 @@ import yaml
 from click import Choice
 from typing_extensions import Annotated
 
-from EredesScraper.utils import parse_config, flatten_config, struct_config, infer_type
-from EredesScraper.workflows import switchboard
+from eredesscraper.utils import parse_config, flatten_config, struct_config, infer_type
+from eredesscraper.workflows import switchboard
 
 appdir = typer.get_app_dir(app_name="ers")
 config_path = Path(appdir) / "cache" / "config.yml"
 
 app = typer.Typer(name="ers",
-                  help="EredesScraper CLI",
+                  help="eredesscraper CLI",
                   add_completion=False,
                   add_help_option=True,
                   no_args_is_help=True,
@@ -24,7 +23,7 @@ app = typer.Typer(name="ers",
 @app.command(help="Initialize the program with a CLI wizard")
 def init():
     """Initialize the program with a CLI wizard"""
-    typer.echo("Welcome to EredesScraper!")
+    typer.echo("Welcome to eredesscraper!")
     typer.echo("Please follow the instructions to set up the program.")
     typer.echo("Press Ctrl+C at any time to exit the wizard.")
     typer.echo("")
@@ -47,10 +46,10 @@ def init():
 
 
 @app.command(help="Run the scraper workflow. Can directly load data onto supported databases.")
-def run(config: Annotated[Optional[pathlib.Path], typer.Argument()] = Path(appdir) / "cache" / "config.yml",
-        workflow: Annotated[Optional[str], typer.Argument()] = "current_month_consumption",
+def run(workflow: str = "current_month_consumption",
         db: Annotated[Optional[str], typer.Argument()] = None):
     """Run a workflow from a config file"""
+    config = Path(appdir) / "cache" / "config.yml"
     assert Path(config).exists(), f"Config file not found. Run {typer.style('ers config load </path/to/config.yml>', fg=typer.colors.GREEN)} to load it."
 
     if db is None:
@@ -64,7 +63,7 @@ def run(config: Annotated[Optional[pathlib.Path], typer.Argument()] = Path(appdi
 
 
 config_app = typer.Typer(name="config",
-                         help="EredesScraper CLI configuration",
+                         help="eredesscraper CLI configuration",
                          add_completion=False,
                          add_help_option=True,
                          no_args_is_help=True)

@@ -13,7 +13,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait as wait
 from webdriver_manager.chrome import ChromeDriverManager
 
-from EredesScraper.utils import wait_for_download, save_screenshot
+from eredesscraper.utils import wait_for_download, save_screenshot
 
 
 class ScraperFlowError(Exception):
@@ -137,7 +137,7 @@ class EredesScraper:
             # Selenium flow
             # Step # | name | target | value | comment
 
-            t1 = progress.add_task(description=" 🔐Loging in...", total=None)
+            t1 = progress.add_task(description=" 🔐 Loging in...", total=None)
             # 1 | open | /login |  |
             self.driver.get("https://balcaodigital.e-redes.pt/login")
 
@@ -162,7 +162,7 @@ class EredesScraper:
             )).click()
 
             progress.remove_task(t1)
-            t2 = progress.add_task(description=" 💡Finding your CPE...", total=None)
+            t2 = progress.add_task(description=" 💡 Finding your CPE...", total=None)
             # 8 | click | css=.card:nth-child(3) .highlights |  |
             wait(self.driver, 30).until(EC.presence_of_element_located(
                 (By.CSS_SELECTOR, ".card:nth-child(3) .highlights")
@@ -179,7 +179,7 @@ class EredesScraper:
             )).click()
 
             progress.remove_task(t2)
-            t3 = progress.add_task(description=" 📊Downloading your data...", total=None)
+            t3 = progress.add_task(description=" 📊 Downloading your data...", total=None)
             time.sleep(30)
             try:
                 element = self.driver.find_element(By.XPATH, "//strong[contains(text(), 'Exportar excel')]")
@@ -199,7 +199,7 @@ class EredesScraper:
             self.dwnl_file = Path(self.tmp) / f"Consumos_{current_date}.xlsx"
 
         progress.remove_task(t3)
-        typer.echo(f"📁Downloaded file: {self.dwnl_file}")
+        typer.echo(f"📁 Downloaded file: {self.dwnl_file}")
         
         return self.dwnl_file
         

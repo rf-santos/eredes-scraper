@@ -1,3 +1,5 @@
 *.ipynb
 .idea
+dist/
+docs
 poetry.lock

@@ -8,7 +8,7 @@ from influxdb_client import WritePrecision
 from influxdb_client.client.exceptions import InfluxDBError
 from influxdb_client.client.write_api import SYNCHRONOUS
 
-from EredesScraper.utils import parse_monthly_consumptions
+from eredesscraper.utils import parse_monthly_consumptions
 
 
 class InfluxDB:
@@ -161,7 +161,7 @@ from(bucket: "{self.__bucket}")
                 tzinfo=datetime.timezone(datetime.timedelta(hours=1))
             )
         else:
-            return result['_time'].iloc[0]
+            return result['_time'].iloc[0].dt.tz_localize('Europe/Lisbon')
 
     def delta(self, source_data: Path, cpe_code: str) -> pd.DataFrame:
         """

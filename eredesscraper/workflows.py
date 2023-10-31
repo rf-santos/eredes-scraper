@@ -3,9 +3,9 @@ from pathlib import Path
 
 import typer
 
-from EredesScraper.agent import EredesScraper
-from EredesScraper.db_clients import InfluxDB
-from EredesScraper.utils import parse_config
+from eredesscraper.agent import EredesScraper
+from eredesscraper.db_clients import InfluxDB
+from eredesscraper.utils import parse_config
 
 
 def switchboard(name: str, db: str, config_path: Path) -> None:
