@@ -14,7 +14,7 @@ A high-level of the process is:
 ## Installation
 The package can be installed using pip:
 ```bash
-pip install EredesScraper
+pip install eredesscraper
 ```
 
 ## Configuration
@@ -47,7 +47,7 @@ influxdb:
 ### :snake: Python script:
 
 ```python
-from EredesScraper.workflows import switchboard
+from eredesscraper.workflows import switchboard
 from pathlib import Path
 
 switchboard(name="current_month_consumption",

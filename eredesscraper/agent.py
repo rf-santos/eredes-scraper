@@ -13,7 +13,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait as wait
 from webdriver_manager.chrome import ChromeDriverManager
 
-from EredesScraper.utils import wait_for_download, save_screenshot
+from eredesscraper.utils import wait_for_download, save_screenshot
 
 
 class ScraperFlowError(Exception):
@@ -199,7 +199,7 @@ class EredesScraper:
             self.dwnl_file = Path(self.tmp) / f"Consumos_{current_date}.xlsx"
 
         progress.remove_task(t3)
-        typer.echo(f"📁Downloaded file: {self.dwnl_file}")
+        typer.echo(f"📁 Downloaded file: {self.dwnl_file}")
         
         return self.dwnl_file
         
