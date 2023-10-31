@@ -1,6 +1,7 @@
 name: Publish Python 🐍 distribution 📦 to PyPI and TestPyPI
 
 on:
+  workflow_dispatch:
   push:
     tags:
     - '*'
@@ -23,7 +24,7 @@ jobs:
         poetry
         --user
     - name: Build a binary wheel and a source tarball
-      run: poetry build --directory /home/runner/work/eredes-scraper/eredes-scraper/dist
+      run: poetry build --directory /home/runner/work/eredes-scraper/EredesScraper
     - name: Store the distribution packages
       uses: actions/upload-artifact@v3
       with:
