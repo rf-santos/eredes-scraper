@@ -8,11 +8,11 @@ from eredesscraper.db_clients import InfluxDB
 from eredesscraper.utils import parse_config
 
 
-def switchboard(name: str, db: str, config_path: Path) -> None:
+def switchboard(name: str, db: str, config_path: Path, month: int, delta:bool = False) -> None:
     """
     The run function is the entry point.
 
-    :param name: str: Specify which workflow to run. One of: ``current_month_consumption``
+    :param name: str: Specify which workflow to run. One of: ``current_month``
     :type name: str
     :param db: str: Specify which database to use. One of: ``influxdb``
     :type db: str
@@ -24,25 +24,46 @@ def switchboard(name: str, db: str, config_path: Path) -> None:
 
     config = parse_config(config_path=config_path)
 
+    typer.echo(f"🚀\tRunning {typer.style(name, fg=typer.colors.GREEN)} workflow")
+
+    typer.echo(f"📇\tE-REDES client info: "
+               f"NIF: {typer.style(config['eredes']['nif'], fg=typer.colors.GREEN, bold=True)}, "
+               f"CPE: {typer.style(config['eredes']['cpe'], fg=typer.colors.GREEN, bold=True)}")
+
     match name:
-        case 'current_month_consumption':
-            typer.echo(f"🚀\tRunning {typer.style('current_month_consumption', fg=typer.colors.GREEN)} workflow")
-
-            typer.echo(f"📇\tE-REDES client info: "
-                       f"NIF: {typer.style(config['eredes']['nif'], fg=typer.colors.GREEN, bold=True)}, "
-                       f"CPE: {typer.style(config['eredes']['cpe'], fg=typer.colors.GREEN, bold=True)}")
-
+        case 'current_month':
             bot = EredesScraper(
                 nif=config['eredes']['nif'],
                 password=config['eredes']['pwd'],
                 cpe_code=config['eredes']['cpe']
             )
             bot.setup()
-            bot.current_month_consumption()
+            bot.current_month()
+            bot.teardown()
+
+        case 'last_month':
+            bot = EredesScraper(
+                nif=config['eredes']['nif'],
+                password=config['eredes']['pwd'],
+                cpe_code=config['eredes']['cpe']
+            )
+            bot.setup()
+            bot.last_month()
+            bot.teardown()
+
+        case 'select_month':
+            bot = EredesScraper(
+                nif=config['eredes']['nif'],
+                password=config['eredes']['pwd'],
+                cpe_code=config['eredes']['cpe']
+            )
+            bot.setup()
+            bot.select_month(month=month)
             bot.teardown()
 
         case _:
             typer.echo(f"??\tWorkflow {typer.style(name, fg=typer.colors.GREEN)} not supported")
+            raise typer.Exit(code=1)
 
     match db:
         case 'influxdb':
@@ -53,7 +74,7 @@ def switchboard(name: str, db: str, config_path: Path) -> None:
                 port=config['influxdb']['port'],
                 bucket=config['influxdb']['bucket'])
             db.connect()
-            db.load(source_data=bot.dwnl_file, cpe_code=config['eredes']['cpe'])
+            db.load(source_data=bot.dwnl_file, cpe_code=config['eredes']['cpe'], delta=delta)
 
         case '':
             pass

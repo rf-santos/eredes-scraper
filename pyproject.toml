@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "eredesscraper"
 version = "0"
-description = "Selenium-based web scraper to extract data from e-Redes website and load it into database storage."
+description = "Selenium-based web scraper to extract data from E-REDES website and load it into database storage."
 authors = ["Ricardo Filipe dos Santos <ricardofilipecdsantos@gmail.com>"]
 license = "MIT"
 readme = "README.md"
@@ -9,7 +9,7 @@ homepage = "https://github.com/rf-santos/eredes-scraper"
 repository = "https://github.com/rf-santos/eredes-scraper"
 documentation = "https://github.com/rf-santos/eredes-scraper"
 keywords = ["selenium", "web", "scraper", "influxdb", "database", "electricity", "energy", "e-redes"]
-include = ["README.md", "LICENSE", "pyproject.toml", "config.yml", "requirements.txt", "tests/**"]
+include = ["README.md", "CHANGELOG.md", "LICENSE", "pyproject.toml", "config.yml", "requirements.txt", "tests/**"]
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.13"
@@ -20,6 +20,11 @@ pyyaml = "^6.0.1"
 selenium = "^4.14.0"
 webdriver-manager = "^4.0.1"
 typer = {extras = ["all"], version = "^0.9.0"}
+
+[tool.poetry.group.dev.dependencies]
+ipython = "^8.17.2"
+jupyter = "^1.0.0"
+requests = "^2.31.0"
 
 [tool.poetry-dynamic-versioning]
 enable = true

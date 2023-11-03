@@ -3,27 +3,34 @@ from typing import Optional
 
 import typer
 import yaml
-from click import Choice
-from typing_extensions import Annotated
 
 from eredesscraper.utils import parse_config, flatten_config, struct_config, infer_type
 from eredesscraper.workflows import switchboard
+from eredesscraper.meta import cli_header, supported_workflows, supported_databases
+from eredesscraper._version import get_version
 
 appdir = typer.get_app_dir(app_name="ers")
 config_path = Path(appdir) / "cache" / "config.yml"
 
 app = typer.Typer(name="ers",
-                  help="eredesscraper CLI",
+                  help=cli_header,
                   add_completion=False,
                   add_help_option=True,
                   no_args_is_help=True,
-                  epilog="For more information, please visit https://github.com/rf-santos/eredes-scraper")
+                  epilog="For more information, please visit https://github.com/rf-santos/eredes-scraper",
+                  context_settings={"allow_extra_args": True})
+
+@app.command(help="Show the current version")
+def version():
+    """Show the current version"""
+    typer.echo(f"Version: {get_version()}")
 
 
 @app.command(help="Initialize the program with a CLI wizard")
 def init():
     """Initialize the program with a CLI wizard"""
-    typer.echo("Welcome to eredesscraper!")
+
+    typer.echo("Welcome to E-REDES Scraper!")
     typer.echo("Please follow the instructions to set up the program.")
     typer.echo("Press Ctrl+C at any time to exit the wizard.")
     typer.echo("")
@@ -34,23 +41,29 @@ def init():
     config_path = typer.prompt("Path to config file", default="config.yml")
     assert Path(config_path).exists(), "File not found. Please check the path and try again."
     assert Path(config_path).is_file(), "Please enter a valid file path."
-    config = parse_config(config_path)
+    load(config_path)
     typer.echo("Config file loaded successfully.")
-    typer.echo("")
-    typer.echo("Please enter the workflow to run:")
-    workflow = typer.prompt("Workflow", default="current_month_consumption", show_choices=True,
-                            type=Choice(["current_month_consumption", "last_month_consumption"]))
-    typer.echo("")
-    typer.echo("Initializing the program...")
-    typer.echo("")
 
 
 @app.command(help="Run the scraper workflow. Can directly load data onto supported databases.")
-def run(workflow: str = "current_month_consumption",
-        db: Annotated[Optional[str], typer.Argument()] = None):
+def run(workflow: str = typer.Option("current_month",
+                                     "--workflow", "-w",
+                                     help=f"Specify one of the supported workflows: {supported_workflows}"),
+        db: str = typer.Option("influxdb",
+                               "--database", "--db", "-d",
+                               help=f"Specify one of the supported databases: {supported_databases}"),
+        month: Optional[int] = typer.Option(None,
+                                            "--month", "-m",
+                                            help="Specify the month to load (1-12). "
+                                                 "[Required for `select_month` workflow]",
+                                            show_default=False),
+        delta: Optional[bool] = typer.Option(False,
+                                             "--delta", "-D",
+                                             help="Load only the most recent data points")):
     """Run a workflow from a config file"""
     config = Path(appdir) / "cache" / "config.yml"
-    assert Path(config).exists(), f"Config file not found. Run {typer.style('ers config load </path/to/config.yml>', fg=typer.colors.GREEN)} to load it."
+    assert Path(
+        config).exists(), f"Config file not found. Run {typer.style('ers config load </path/to/config.yml>', fg=typer.colors.GREEN)} to load it."
 
     if db is None:
         db = ""
@@ -58,12 +71,14 @@ def run(workflow: str = "current_month_consumption",
     switchboard(
         config_path=config.resolve(),
         name=workflow,
-        db=db
+        db=db,
+        month=month,
+        delta=delta
     )
 
 
 config_app = typer.Typer(name="config",
-                         help="eredesscraper CLI configuration",
+                         help="E-REDES Scraper CLI configuration",
                          add_completion=False,
                          add_help_option=True,
                          no_args_is_help=True)
@@ -113,7 +128,7 @@ def show():
         typer.echo("")
         typer.echo(yaml.dump(config), color=True)
     except FileNotFoundError:
-        typer.echo("No config file found. Please run `ers config file /path/to/config.yml` to set a config file.")
+        typer.echo("No config file found. Please run `ers config load /path/to/config.yml` to set a config file.")
         raise typer.Exit(code=1)
 
 
