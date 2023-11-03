@@ -1,12 +1,13 @@
 import os
 import time
 from collections.abc import MutableMapping
+from datetime import datetime
 from pathlib import Path
+from selenium import webdriver
 from typing import Union
 
 import pandas as pd
 import yaml
-from selenium import webdriver
 from selenium.webdriver.common.by import By
 
 
@@ -44,7 +45,7 @@ def parse_monthly_consumptions(file_path: Path, cpe_code: str) -> pd.DataFrame:
     df['cpe'] = cpe_code
 
     # add the date_time column
-    df['date_time'] = df['date_time'].dt.tz_localize('Europe/Lisbon')
+    df['date_time'] = df['date_time'].dt.tz_localize('Europe/Lisbon', ambiguous=True)
     df.set_index('date_time', inplace=True)
 
     return df
@@ -127,12 +128,13 @@ def struct_config(d: dict, sep: str = ".") -> dict:
 
 def parse_config(config_path: Path = Path.cwd() / "config.yml") -> dict:
     """
-    The parse_config function parses the config.yml file and returns a dictionary with the parsed data.
+    Parses a YAML configuration file and returns its contents as a dictionary.
 
-    :param config_path: Specify the path to the config.yml file
-    :type config_path: pathlib.Path
-    :return: A dictionary with the parsed data from the config.yml file
-    :doc-author: Ricardo Filipe dos Santos
+    Args:
+        config_path (pathlib.Path): The path to the YAML configuration file. Defaults to the current working directory.
+
+    Returns:
+        dict: The contents of the YAML configuration file as a dictionary.
     """
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
@@ -140,14 +142,30 @@ def parse_config(config_path: Path = Path.cwd() / "config.yml") -> dict:
     return config
 
 
-def save_screenshot(driver: webdriver.Chrome, path: str = 'screenshot.png') -> None:
-    # Ref: https://stackoverflow.com/a/52572919/
+def save_screenshot(driver: webdriver, path: str = '.', name: str = 'screenshot') -> None:
+    """
+    Saves a screenshot of the current webpage displayed in the given WebDriver instance.
+
+    Args:
+        driver (selenium.WebDriver): The WebDriver instance to use for taking the screenshot.
+        path (str, optional): The file path to save the screenshot to. Defaults to 'screenshot.png'.
+    """
+    try:
+        path = Path(path).resolve()
+        assert path.is_dir(), f"Invalid directory: {path}"
+        path.mkdir(parents=True, exist_ok=True)
+    except PermissionError:
+        print("Permission denied to create a directory for the screenshot")
+
+    name = name.replace(' ', '_') + '.png'
+
+    path = path / name
+
     original_size = driver.get_window_size()
     required_width = driver.execute_script('return document.body.parentNode.scrollWidth')
     required_height = driver.execute_script('return document.body.parentNode.scrollHeight')
     driver.set_window_size(required_width, required_height)
-    # driver.save_screenshot(path)  # has scrollbar
-    driver.find_element(By.TAG_NAME, "body").screenshot(path)  # avoids scrollbar
+    driver.find_element(By.TAG_NAME, "body").screenshot(path.__str__())
     driver.set_window_size(original_size['width'], original_size['height'])
 
 
@@ -175,16 +193,24 @@ def config2env(flat_config: dict):
     `key=value` pairs, separated by a newline character. This is then exported to the environment
     variables.
 
-    :param flat_config: Specify the dictionary to be converted
-    :type flat_config: dict
-    :return: None
-    :doc-author: Ricardo Filipe dos Santos
+    Args:
+        flat_config (dict): Specify the dictionary to be converted
+    Returns:
+        None
     """
     for k, v in flat_config.items():
         os.environ[k.upper()] = str(v)
 
 
 def infer_type(value: str) -> Union[str, int, float, bool]:
+    """Infer the type of a string value.
+
+    Args:
+        value (str): The value to be inferred.
+
+    Returns:
+        Union[str, int, float, bool]: The inferred value.
+    """
     if value.isnumeric():
         return int(value)
     elif value.lower() in ["True", "False", "true", "false", "yes", "no", "y", "n", "1", "0"]:
@@ -193,3 +219,35 @@ def infer_type(value: str) -> Union[str, int, float, bool]:
         return float(value)
     else:
         return value
+
+
+def map_month_matrix(date: datetime) -> tuple:
+    """
+    The map_month_matrix function takes a month name and returns the (row, column) coordinates as a tuple.
+    This maps to the month selection popup table in the E-REDES website.
+    The table is a 4x3 matrix, with the months in the following order:
+    January, February, March
+    April, May, June
+    July, August, September
+    October, November, December
+
+    Args:
+        date (datetime.datetime): Specify the month to be mapped
+    Returns:
+        tuple: The (row, column) coordinates of the month in the table
+    """
+    if date.month <= 3:
+        row = 1
+    elif date.month <= 6:
+        row = 2
+    elif date.month <= 9:
+        row = 3
+    else:
+        row = 4
+
+    if date.month % 3 == 0:
+        column = 3
+    else:
+        column = date.month % 3
+
+    return row, column

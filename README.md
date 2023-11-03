@@ -8,7 +8,7 @@ A high-level of the process is:
 3. The file is parsed and the data is compared to the data in the database to determine if there are new readings.
 4. If there are new readings, they are stored in the database.
 
-> :information_source: This package supports E-REDES website available at time of writing 23/10/2023. 
+> This package supports E-REDES website available at time of writing 23/10/2023. 
 > The entrypoint for the scraper is the page https://balcaodigital.e-redes.pt/login.
 
 ## Installation
@@ -44,13 +44,13 @@ influxdb:
 ```
 
 ## Usage
-### :snake: Python script:
+### Python script:
 
 ```python
 from eredesscraper.workflows import switchboard
 from pathlib import Path
 
-switchboard(name="current_month_consumption",
+switchboard(name="current_month",
             db="influxdb",
             config_path=Path("./config.yml"))
 ```
@@ -64,18 +64,20 @@ ers run
 
 ## Limitations
 ### Available workflows:
-- `current_month_consumption`: Collects the current month consumption data from the E-REDES website.
+- `current_month`: Collects the current month consumption data from the E-REDES website.
 
 ### Available databases:
 - `influxdb`: Stores the data in an InfluxDB database. (https://docs.influxdata.com/influxdb/v2/get-started/)
 
 ## Roadmap
-- [ ] Add support for other workflows.
-- [ ] Add support for other databases.
-- [X] Build CLI.
-- [ ] Add tests.
+- [X] ~~Add workflow for retrieving previous month data.~~
+- [X] ~~Add workflow for retrieving data form an arbitrary month.~~
+- [X] ~~Build CLI~~.
+- [ ] Containerize app.
+- [ ] Documentation.
 - [ ] Add CI/CD.
 - [ ] Add logging.
+- [ ] Add tests.
 - [ ] Add runtime support for multiple CPEs.
 
 ## Contributing

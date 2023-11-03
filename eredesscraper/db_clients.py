@@ -97,18 +97,34 @@ class InfluxDB:
 
         return None
 
-    def load(self, source_data: Path, cpe_code) -> None:
+    def load(self, source_data: Path, cpe_code: str, delta: bool = False) -> None:
         """
         The ``load`` method loads the data parsed as a pandas DataFrame into the InfluxDB database.
 
-        :param source_data: Specify the path to the source data .XLSX file to be loaded
-        :return: None
-        :doc-author: Ricardo Filipe dos Santos
+        Args:
+        -----
+        source_data: Path
+            Specify the source data to be loaded into the database
+        cpe_code: str
+            Specify the CPE code of the data point to be loaded
+        delta: bool
+            Specify whether to load the entire file or only the most recent data points (default: False).
+            This is useful when the source data is a monthly file and the data points are updated daily.
+            Otherwise, it will not fill the gaps with missing data points (e.g. missing data points between the most
+            recent data point in the DB and previous data points not present in the DB).
+
+        Returns:
+        --------
+            None
         """
+        if delta:
+            records = self.delta(source_data, cpe_code=cpe_code)
+        else:
+            records = parse_monthly_consumptions(source_data, cpe_code=cpe_code)
 
         self.client.write_api(write_options=SYNCHRONOUS).write(bucket=self.__bucket,
                                                                org=self.__org,
-                                                               record=self.delta(source_data, cpe_code=cpe_code),
+                                                               record=records,
                                                                data_frame_measurement_name='kW',
                                                                data_frame_tag_columns=['cpe'],
                                                                data_frame_field_columns=['consumption'],
@@ -125,7 +141,7 @@ class InfluxDB:
         except PermissionError:
             typer.echo("💥\tPermission denied to remove the staging area for the Scraper")
 
-        typer.echo(f"✅\tLoaded data from {source_data} into the InfluxDB database")
+        typer.echo(f"📈\tLoaded data from {source_data} into the InfluxDB database")
 
         return None
 
@@ -149,9 +165,8 @@ from(bucket: "{self.__bucket}")
 
         result = self.client.query_api().query_data_frame(org=self.__org, query=query)
 
-        # test if result is empty
         if result.empty:
-            return datetime.datetime(
+            last_insert = datetime.datetime(
                 1989,
                 5,
                 11,
@@ -161,7 +176,10 @@ from(bucket: "{self.__bucket}")
                 tzinfo=datetime.timezone(datetime.timedelta(hours=1))
             )
         else:
-            return result['_time'].iloc[0].dt.tz_localize('Europe/Lisbon')
+            last_insert = result['_time'].iloc[0]
+            last_insert = last_insert.tz_convert(datetime.timezone(datetime.timedelta(hours=1)))
+
+        return last_insert
 
     def delta(self, source_data: Path, cpe_code: str) -> pd.DataFrame:
         """

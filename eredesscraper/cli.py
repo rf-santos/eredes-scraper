@@ -1,15 +1,13 @@
-import pathlib
 from pathlib import Path
 from typing import Optional
 
 import typer
 import yaml
-from click import Choice
-from typing_extensions import Annotated
 
 from eredesscraper.utils import parse_config, flatten_config, struct_config, infer_type
 from eredesscraper.workflows import switchboard
-from eredesscraper.meta import cli_header
+from eredesscraper.meta import cli_header, supported_workflows, supported_databases
+from eredesscraper._version import get_version
 
 appdir = typer.get_app_dir(app_name="ers")
 config_path = Path(appdir) / "cache" / "config.yml"
@@ -19,13 +17,13 @@ app = typer.Typer(name="ers",
                   add_completion=False,
                   add_help_option=True,
                   no_args_is_help=True,
-                  epilog="For more information, please visit https://github.com/rf-santos/eredes-scraper")
-
+                  epilog="For more information, please visit https://github.com/rf-santos/eredes-scraper",
+                  context_settings={"allow_extra_args": True})
 
 @app.command(help="Show the current version")
 def version():
     """Show the current version"""
-    typer.echo(cli_header)
+    typer.echo(f"Version: {get_version()}")
 
 
 @app.command(help="Initialize the program with a CLI wizard")
@@ -48,8 +46,20 @@ def init():
 
 
 @app.command(help="Run the scraper workflow. Can directly load data onto supported databases.")
-def run(workflow: str = "current_month_consumption",
-        db: Annotated[Optional[str], typer.Argument()] = None):
+def run(workflow: str = typer.Option("current_month",
+                                     "--workflow", "-w",
+                                     help=f"Specify one of the supported workflows: {supported_workflows}"),
+        db: str = typer.Option("influxdb",
+                               "--database", "--db", "-d",
+                               help=f"Specify one of the supported databases: {supported_databases}"),
+        month: Optional[int] = typer.Option(None,
+                                            "--month", "-m",
+                                            help="Specify the month to load (1-12). "
+                                                 "[Required for `select_month` workflow]",
+                                            show_default=False),
+        delta: Optional[bool] = typer.Option(False,
+                                             "--delta", "-D",
+                                             help="Load only the most recent data points")):
     """Run a workflow from a config file"""
     config = Path(appdir) / "cache" / "config.yml"
     assert Path(
@@ -61,7 +71,9 @@ def run(workflow: str = "current_month_consumption",
     switchboard(
         config_path=config.resolve(),
         name=workflow,
-        db=db
+        db=db,
+        month=month,
+        delta=delta
     )
 
 
