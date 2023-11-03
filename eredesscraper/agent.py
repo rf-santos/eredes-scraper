@@ -38,11 +38,7 @@ class EredesScraper:
         except PermissionError:
             print("Permission denied to create a staging area for the Scraper")
 
-        dl_path = Path.cwd() / 'tmp'
-        if platform == "linux" or platform == "linux2" or platform == "darwin":
-            self.tmp = dl_path.as_posix()
-        elif platform == "win32":
-            self.tmp = dl_path.__str__()
+        self.tmp = Path.cwd() / 'tmp'
 
     @property
     def implicit_wait(self):
