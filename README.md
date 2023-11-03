@@ -55,7 +55,7 @@ switchboard(name="current_month",
             config_path=Path("./config.yml"))
 ```
 
-### :computer: CLI:
+### CLI:
 ```bash
 ers config load "/path/to/config.yml"
 
@@ -64,10 +64,12 @@ ers run
 
 ## Limitations
 ### Available workflows:
-- `current_month`: Collects the current month consumption data from the E-REDES website.
+- `current_month`: Collects the current month consumption.
+- `previous_month`: Collects the previous month consumption data.
+- `select_month`: Collects the consumption data from an arbitrary month parsed by the user.
 
 ### Available databases:
-- `influxdb`: Stores the data in an InfluxDB database. (https://docs.influxdata.com/influxdb/v2/get-started/)
+- `influxdb`: Loads the data in an InfluxDB database. (https://docs.influxdata.com/influxdb/v2/get-started/)
 
 ## Roadmap
 - [X] ~~Add workflow for retrieving previous month data.~~
