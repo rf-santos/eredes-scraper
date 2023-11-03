@@ -9,7 +9,7 @@ homepage = "https://github.com/rf-santos/eredes-scraper"
 repository = "https://github.com/rf-santos/eredes-scraper"
 documentation = "https://github.com/rf-santos/eredes-scraper"
 keywords = ["selenium", "web", "scraper", "influxdb", "database", "electricity", "energy", "e-redes"]
-include = ["README.md", "LICENSE", "pyproject.toml", "config.yml", "requirements.txt", "tests/**"]
+include = ["README.md", "CHANGELOG.md", "LICENSE", "pyproject.toml", "config.yml", "requirements.txt", "tests/**"]
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.13"
