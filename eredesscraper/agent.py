@@ -304,7 +304,7 @@ class EredesScraper:
             time.sleep(15)
 
             try:
-                wait(self.driver, 30).until(EC.presence_of_element_located(
+                wait(self.driver, 60).until(EC.presence_of_element_located(
                     (By.XPATH, f"//div[@id='cdk-overlay-4']/div/div/date-range-popup/div/div/div"
                                                    f"/inner-popup/div/div/div/month-table/table/tbody/tr[{row}]"
                                                    f"/td[{col}]/div"))).click()
@@ -413,7 +413,7 @@ class EredesScraper:
             time.sleep(15)
 
             try:
-                wait(self.driver, 30).until(EC.presence_of_element_located(
+                wait(self.driver, 60).until(EC.presence_of_element_located(
                     (By.XPATH, f"//div[@id='cdk-overlay-4']/div/div/date-range-popup/div/div/div"
                                                    f"/inner-popup/div/div/div/month-table/table/tbody/tr[{row}]"
                                                    f"/td[{col}]/div"))).click()
