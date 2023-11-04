@@ -9,7 +9,6 @@ on:
 jobs:
   build-publish-release:
     name: Build distribution 📦, publish to PyPI 🐍, and create GitHub Release
-    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
       # Used to authenticate to PyPI via OIDC.
