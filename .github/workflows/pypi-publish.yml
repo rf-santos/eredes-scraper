@@ -32,6 +32,7 @@ jobs:
 
       - name: Build package
         run: |
+          poetry version ${{ github.ref_name }}
           poetry build
 
       - name: Store the distribution packages
