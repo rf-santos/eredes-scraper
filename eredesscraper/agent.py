@@ -38,7 +38,7 @@ class EredesScraper:
         except PermissionError:
             print("Permission denied to create a staging area for the Scraper")
 
-        self.tmp = Path.cwd() / 'tmp'
+        self.tmp = Path(Path.cwd() / 'tmp').__str__()
 
     @property
     def implicit_wait(self):
