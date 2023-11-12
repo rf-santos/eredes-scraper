@@ -59,16 +59,15 @@ ers run -w select_month -d influxdb -m 5
 ```
 
 ### Docker:
-If you are running local isntances of the target databases (e.g. default local InfluxDB "http://localhost:8086") you will need to set `--network=host` to reach it.
 ```bash
 # get readings from May
 
 # docker args
-docker run --rm -v config.yml:/config.yml --network host \
+docker run --rm -v config.yml:/config.yml \
   # latest `ers` image
   ghcr.io/rf-santos/eredesscraper:latest \
   # calling `ers` 
-  ers run -w current_month -d influxdb -D 
+  ers run -w current_month -d influxdb
 ```
 
 ### Python:
