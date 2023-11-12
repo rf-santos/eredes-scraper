@@ -8,13 +8,19 @@ RUN apt-get update \
     unzip \
     xvfb \
     libxi6 \
-    libgconf-2-4 \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    libgconf-2-4
 
-RUN curl -sSL https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -o /tmp/chrome.deb \
-    && dpkg -i /tmp/chrome.deb || apt-get install -yf \
-    && rm -rf /tmp/chrome.deb \
+RUN curl -fSsL https://dl.google.com/linux/linux_signing_key.pub | \
+    gpg --dearmor | \
+    tee /usr/share/keyrings/google-chrome.gpg >> /dev/null
+
+RUN echo deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main | \
+    tee /etc/apt/sources.list.d/google-chrome.list
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    google-chrome-stable \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 RUN python -m pip install --upgrade pip \

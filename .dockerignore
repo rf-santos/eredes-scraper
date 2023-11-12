@@ -1,10 +1,7 @@
 *.ipynb
 .idea
-.vscode
 dist/
 docs
 poetry.lock
 .devcontainer/devcontainer.json
-*__pycache__
-*.pytest_cache
-my-config.yml
+.gitignore
