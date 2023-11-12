@@ -49,7 +49,7 @@ def init():
 def run(workflow: str = typer.Option("current_month",
                                      "--workflow", "-w",
                                      help=f"Specify one of the supported workflows: {supported_workflows}"),
-        db: str = typer.Option("influxdb",
+        db: str = typer.Option(None,
                                "--database", "--db", "-d",
                                help=f"Specify one of the supported databases: {supported_databases}"),
         month: Optional[int] = typer.Option(None,
