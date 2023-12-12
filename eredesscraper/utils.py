@@ -14,7 +14,7 @@ from selenium.webdriver.common.by import By
 
 def parse_monthly_consumptions(file_path: Path, cpe_code: str) -> pd.DataFrame:
     """
-    The parse_file function takes a XLSX file path retrieved from E-REDES and returns
+    The `parse_monthly_consumptions` function takes a XLSX file path retrieved from E-REDES and returns
     a pandas DataFrame with the parsed data.
     An example for the retrieved file can be found in the `tests` folder.
     TZ is set to Europe/Lisbon
@@ -34,12 +34,13 @@ def parse_monthly_consumptions(file_path: Path, cpe_code: str) -> pd.DataFrame:
 
     df = pd.read_excel(
         file_path,
-        skiprows=7,
+        skiprows=8,
         parse_dates=[[0, 1]],
         names=['date', 'time', 'consumption'],
         dtype={'consumption': float},
-        decimal=',',
-        thousands='.'
+        decimal='.',
+        thousands=',',
+        usecols=range(3)
     )
 
     # add the cpe code from the config file to all rows

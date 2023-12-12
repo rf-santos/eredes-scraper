@@ -13,7 +13,7 @@ def test_parse_monthly_consumptions():
     assert df['cpe'].unique() == cpe_code
     assert df.index.tzinfo == UTC
     assert df['consumption'].dtype == float
-    assert df['consumption'].sum() == 479505.0
+    assert df['consumption'].sum() == 989.348
 
 def test_flatten_config():
     d = {'a': 1, 'b': {'x': 2, 'y': 3}, 'c': 4}
