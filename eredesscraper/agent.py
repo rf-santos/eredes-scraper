@@ -2,7 +2,6 @@ import datetime
 import os
 import time
 from pathlib import Path
-from sys import platform
 
 import typer
 from dateutil.relativedelta import relativedelta
@@ -293,7 +292,7 @@ class EredesScraper:
             progress.remove_task(t2)
             t3 = progress.add_task(description=" 📊 Downloading your data...", total=None)
 
-            time.sleep(15)
+            time.sleep(20)
 
             self.driver.find_element(By.CSS_SELECTOR, ".ng-tns-c78-32 > .ng-untouched").click()
 

@@ -1,5 +1,6 @@
 import datetime
 from pathlib import Path
+from pytz import UTC
 
 import influxdb_client
 import pandas as pd
@@ -173,11 +174,11 @@ from(bucket: "{self.__bucket}")
                 0,
                 0,
                 0,
-                tzinfo=datetime.timezone(datetime.timedelta(hours=1))
+                tzinfo=UTC
             )
         else:
             last_insert = result['_time'].iloc[0]
-            last_insert = last_insert.tz_convert(datetime.timezone(datetime.timedelta(hours=1)))
+            last_insert = last_insert.tz_convert(UTC)
 
         return last_insert
 

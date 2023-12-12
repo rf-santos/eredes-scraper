@@ -1,5 +1,6 @@
 import os
 import time
+from pytz import UTC
 from collections.abc import MutableMapping
 from datetime import datetime
 from pathlib import Path
@@ -13,7 +14,7 @@ from selenium.webdriver.common.by import By
 
 def parse_monthly_consumptions(file_path: Path, cpe_code: str) -> pd.DataFrame:
     """
-    The parse_file function takes a XLSX file path retrieved from E-REDES and returns
+    The `parse_monthly_consumptions` function takes a XLSX file path retrieved from E-REDES and returns
     a pandas DataFrame with the parsed data.
     An example for the retrieved file can be found in the `tests` folder.
     TZ is set to Europe/Lisbon
@@ -33,19 +34,20 @@ def parse_monthly_consumptions(file_path: Path, cpe_code: str) -> pd.DataFrame:
 
     df = pd.read_excel(
         file_path,
-        skiprows=7,
+        skiprows=8,
         parse_dates=[[0, 1]],
         names=['date', 'time', 'consumption'],
         dtype={'consumption': float},
-        decimal=',',
-        thousands='.'
+        decimal='.',
+        thousands=',',
+        usecols=range(3)
     )
 
     # add the cpe code from the config file to all rows
     df['cpe'] = cpe_code
 
     # add the date_time column
-    df['date_time'] = df['date_time'].dt.tz_localize('Europe/Lisbon', ambiguous=True)
+    df['date_time'] = df['date_time'].dt.tz_localize(UTC)
     df.set_index('date_time', inplace=True)
 
     return df
@@ -211,10 +213,13 @@ def infer_type(value: str) -> Union[str, int, float, bool]:
     Returns:
         Union[str, int, float, bool]: The inferred value.
     """
-    if value.isnumeric():
+    lower_value = value.lower()
+    if lower_value in ["true", "yes", "y", "1"]:
+        return True
+    elif lower_value in ["false", "no", "n", "0"]:
+        return False
+    elif value.isnumeric():
         return int(value)
-    elif value.lower() in ["True", "False", "true", "false", "yes", "no", "y", "n", "1", "0"]:
-        return bool(value)
     elif value.replace(".", "", 1).isnumeric():
         return float(value)
     else:

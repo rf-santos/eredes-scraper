@@ -2,6 +2,10 @@ FROM docker.io/library/python:3.11
 
 LABEL maintainer="Ricardo Filipe dos Santos <ricardofilipecdsantos@gmail.com>"
 
+COPY . /app
+
+WORKDIR /app
+
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
     curl \
@@ -22,28 +26,16 @@ RUN apt-get update \
     google-chrome-stable \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
-
+    
 RUN python -m pip install --upgrade pip \
     && pip install --no-cache-dir \
-    poetry==1.6.1 \
+    eredesscraper \
     && pip cache purge
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=off \
     PIP_DISABLE_PIP_VERSION_CHECK=on \
-    PIP_DEFAULT_TIMEOUT=100 \
-    POETRY_VIRTUALENVS_CREATE=false
+    PIP_DEFAULT_TIMEOUT=100
 
-RUN mkdir -p /app
-
-COPY . /app
-
-WORKDIR /app
-
-RUN poetry config virtualenvs.create false \
-    && poetry install --with dev --no-interaction --no-ansi \
-    && poetry cache clear --all pypi --no-interaction \
-    && rm -rf /root/.cache/pypoetry
-
-# CMD ["ers"]
+ENTRYPOINT [ "/app/scripts/entrypoint.sh" ]

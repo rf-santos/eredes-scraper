@@ -1,12 +1,12 @@
 # E-REDES Scraper
 ## Description
-This is a web scraper that collects data from the E-REDES website and stores it in a database.
-Since there is no exposed interface to the data, the web scraper is the only approach available to collect it.
+This is a web scraper that collects data from the E-REDES website and can upload it to a database.
+Since there is no exposed interface to the data, this web scraper was developed as approach to collect it programatically.
 A high-level of the process is:
 1. The scraper collects the data from the E-REDES website.
 2. A file with the energy consumption readings is downloaded.
-3. The file is parsed and the data is compared to the data in the database to determine if there are new readings.
-4. If there are new readings, they are stored in the database.
+3. [ Optional ] The file is parsed and the data is uploaded to the selected database. 
+4. [ Optional ] A feature supporting only the insertion of "deltas" is available.
 
 > This package supports E-REDES website available at time of writing 23/10/2023. 
 > The entrypoint for the scraper is the page https://balcaodigital.e-redes.pt/login.
@@ -19,7 +19,7 @@ pip install eredesscraper
 
 ## Configuration
 Usage is based on a YAML configuration file.  
-A `config.yml` is used to specify the credentials for the E-REDES website and [Optionally] 
+`config.yml` holds the credentials for the E-REDES website and 
 the database connection. Currently, **only InfluxDB is supported** as a database sink.  
 
 ### Template `config.yml`:
@@ -44,25 +44,52 @@ influxdb:
 ```
 
 ## Usage
-### Python script:
+### CLI:
+```bash
+ers config load "/path/to/config.yml"
+
+# get current month readings
+ers run -d influxdb
+
+# get only deltas from last month readings 
+ers run -w last_month -d influxdb --delta
+
+# get readings from May
+ers run -w select_month -d influxdb -m 5
+```
+
+### Docker:
+```bash
+# get readings from May
+
+# docker args
+docker run --rm -v config.yml:/config.yml \
+  # latest `ers` image
+  ghcr.io/rf-santos/eredesscraper:latest \
+  # calling `ers` 
+  ers run -w current_month -d influxdb
+```
+
+### Python:
 
 ```python
 from eredesscraper.workflows import switchboard
 from pathlib import Path
 
+# get deltas from current month readings
 switchboard(name="current_month",
             db="influxdb",
-            config_path=Path("./config.yml"))
+            config_path=Path("./config.yml")y
+            delta=True)
+
+# get readings from May
+switchboard(name="select_month",
+            db="influxdb",
+            config_path=Path("./config.yml"),
+            month=5)
 ```
 
-### CLI:
-```bash
-ers config load "/path/to/config.yml"
-
-ers run
-```
-
-## Limitations
+## Features
 ### Available workflows:
 - `current_month`: Collects the current month consumption.
 - `previous_month`: Collects the previous month consumption data.
