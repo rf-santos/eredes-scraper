@@ -45,6 +45,8 @@ jobs:
         uses: tschm/token-mint-action@v1.0.2
 
       - name: Publish the package with poetry
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           poetry publish -u __token__ -p '${{ steps.mint.outputs.api-token }}'
 
