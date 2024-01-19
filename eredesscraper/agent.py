@@ -13,7 +13,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait as wait
 from webdriver_manager.chrome import ChromeDriverManager
 
-from eredesscraper.utils import wait_for_download, save_screenshot, map_month_matrix
+from eredesscraper.utils import wait_for_download, save_screenshot, map_month_matrix, map_year_steps
 
 
 class ScraperFlowError(Exception):
@@ -133,7 +133,7 @@ class EredesScraper:
     def teardown(self):
         self.driver.quit()
 
-    def current_month(self):
+    def current(self):
         with Progress(
                 SpinnerColumn(),
                 TextColumn("[progress.description]{task.description}"),
@@ -222,13 +222,14 @@ class EredesScraper:
 
         return self.dwnl_file
 
-    def last_month(self):
+    def previous(self):
         with Progress(
                 SpinnerColumn(),
                 TextColumn("[progress.description]{task.description}"),
                 transient=True,
         ) as progress:
 
+            date = datetime.datetime.now()
             prev_month = datetime.datetime.now() - relativedelta(months=1)
             row, col = map_month_matrix(prev_month)
 
@@ -294,9 +295,12 @@ class EredesScraper:
 
             time.sleep(20)
 
-            self.driver.find_element(By.CSS_SELECTOR, ".ng-tns-c78-32 > .ng-untouched").click()
+            self.driver.find_element(By.CSS_SELECTOR, ".ng-tns-c92-28 > .ng-untouched").click()
 
             time.sleep(15)
+
+            if prev_month.year < date.year:
+                self.driver.find_element(By.CSS_SELECTOR, ".ant-picker-super-prev-icon").click()
 
             try:
                 wait(self.driver, 60).until(EC.presence_of_element_located(
@@ -331,15 +335,19 @@ class EredesScraper:
 
         return self.dwnl_file
 
-    def select_month(self, month: int):
+    def select(self, month: int, year: int):
         with Progress(
                 SpinnerColumn(),
                 TextColumn("[progress.description]{task.description}"),
                 transient=True,
         ) as progress:
 
-            date = datetime.datetime(datetime.datetime.now().year, month, 1)
+            date = datetime.datetime(year, month, datetime.datetime.now().day)
+
+            assert date <= datetime.datetime.now(), "Selected date is in the future"
+
             row, col = map_month_matrix(date)
+            back_steps = map_year_steps(date)
 
             t1 = progress.add_task(description=" 🔐 Loging in...", total=None)
 
@@ -403,9 +411,13 @@ class EredesScraper:
 
             time.sleep(15)
 
-            self.driver.find_element(By.CSS_SELECTOR, ".ng-tns-c78-32 > .ng-untouched").click()
+            self.driver.find_element(By.CSS_SELECTOR, ".ng-tns-c92-28 > .ng-untouched").click()
 
             time.sleep(15)
+            if back_steps > 0:
+                for _ in range(back_steps):
+                    self.driver.find_element(By.CSS_SELECTOR, ".ant-picker-super-prev-icon").click()
+                    time.sleep(5)
 
             try:
                 wait(self.driver, 60).until(EC.presence_of_element_located(

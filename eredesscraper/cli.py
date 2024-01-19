@@ -25,28 +25,28 @@ def version():
     """Show the current version"""
     typer.echo(f"Version: {get_version()}")
 
-
-@app.command(help="Initialize the program with a CLI wizard")
-def init():
-    """Initialize the program with a CLI wizard"""
-
-    typer.echo("Welcome to E-REDES Scraper!")
-    typer.echo("Please follow the instructions to set up the program.")
-    typer.echo("Press Ctrl+C at any time to exit the wizard.")
-    typer.echo("")
-    typer.echo("First, we need to set up the config file. "
-               "See the template `config.yml` at github.com/rf-santos/eredes-scraper for reference.")
-    typer.echo("")
-    typer.echo("Please enter the path to the config file:")
-    config_path = typer.prompt("Path to config file", default="config.yml")
-    assert Path(config_path).exists(), "File not found. Please check the path and try again."
-    assert Path(config_path).is_file(), "Please enter a valid file path."
-    load(config_path)
-    typer.echo("Config file loaded successfully.")
+# TODO: Preform an initial step to guide users through the setup process
+# @app.command(help="Initialize the program with a CLI wizard")
+# def init():
+#     """Initialize the program with a CLI wizard"""
+#
+#     typer.echo("Welcome to E-REDES Scraper!")
+#     typer.echo("Please follow the instructions to set up the program.")
+#     typer.echo("Press Ctrl+C at any time to exit the wizard.")
+#     typer.echo("")
+#     typer.echo("First, we need to set up the config file. "
+#                "See the template `config.yml` at github.com/rf-santos/eredes-scraper for reference.")
+#     typer.echo("")
+#     typer.echo("Please enter the path to the config file:")
+#     config_path = typer.prompt("Path to config file", default="config.yml")
+#     assert Path(config_path).exists(), "File not found. Please check the path and try again."
+#     assert Path(config_path).is_file(), "Please enter a valid file path."
+#     load(config_path)
+#     typer.echo("Config file loaded successfully.")
 
 
 @app.command(help="Run the scraper workflow. Can directly load data onto supported databases.")
-def run(workflow: str = typer.Option("current_month",
+def run(workflow: str = typer.Option("current",
                                      "--workflow", "-w",
                                      help=f"Specify one of the supported workflows: {supported_workflows}"),
         db: str = typer.Option(None,
@@ -55,15 +55,20 @@ def run(workflow: str = typer.Option("current_month",
         month: Optional[int] = typer.Option(None,
                                             "--month", "-m",
                                             help="Specify the month to load (1-12). "
-                                                 "[Required for `select_month` workflow]",
+                                                 "[Required for `select` workflow]",
                                             show_default=False),
+        year: Optional[int] = typer.Option(None, "--year", "-y",
+                                           help="Specify the year to load (YYYY). "
+                                                "[Required for `select` workflow]",
+                                           show_default=False),
         delta: Optional[bool] = typer.Option(False,
                                              "--delta", "-D",
                                              help="Load only the most recent data points")):
     """Run a workflow from a config file"""
     config = Path(appdir) / "cache" / "config.yml"
     assert Path(
-        config).exists(), f"Config file not found. Run {typer.style('ers config load </path/to/config.yml>', fg=typer.colors.GREEN)} to load it."
+        config).exists(), f"Config file not found. "
+    f"Run {typer.style('ers config load </path/to/config.yml>', fg=typer.colors.GREEN)} to load it."
 
     if db is None:
         db = ""
@@ -73,6 +78,7 @@ def run(workflow: str = typer.Option("current_month",
         name=workflow,
         db=db,
         month=month,
+        year=year,
         delta=delta
     )
 
