@@ -256,3 +256,16 @@ def map_month_matrix(date: datetime) -> tuple:
         column = date.month % 3
 
     return row, column
+
+
+def map_year_steps(date: datetime) -> int:
+    """
+    The map_year_steps function takes a datetime object and returns the number of steps to reach the desired year.
+    This maps to the previous year calendar selection popup table in the E-REDES website consumption history.
+
+    Args:
+        date (datetime.datetime): Specify the year to be mapped
+    Returns:
+        int: The number of steps to reach the desired year
+    """
+    return datetime.now().year - date.year

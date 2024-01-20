@@ -52,10 +52,10 @@ ers config load "/path/to/config.yml"
 ers run -d influxdb
 
 # get only deltas from last month readings 
-ers run -w last_month -d influxdb --delta
+ers run -w previous -d influxdb --delta
 
 # get readings from May
-ers run -w select_month -d influxdb -m 5
+ers run -w select -d influxdb -m 5
 ```
 
 ### Docker:
@@ -67,7 +67,7 @@ docker run --rm -v config.yml:/config.yml \
   # latest `ers` image
   ghcr.io/rf-santos/eredesscraper:latest \
   # calling `ers` 
-  ers run -w current_month -d influxdb
+  ers run -w current -d influxdb
 ```
 
 ### Python:
@@ -77,13 +77,13 @@ from eredesscraper.workflows import switchboard
 from pathlib import Path
 
 # get deltas from current month readings
-switchboard(name="current_month",
+switchboard(name="current",
             db="influxdb",
             config_path=Path("./config.yml")y
             delta=True)
 
 # get readings from May
-switchboard(name="select_month",
+switchboard(name="select",
             db="influxdb",
             config_path=Path("./config.yml"),
             month=5)
@@ -91,9 +91,9 @@ switchboard(name="select_month",
 
 ## Features
 ### Available workflows:
-- `current_month`: Collects the current month consumption.
-- `previous_month`: Collects the previous month consumption data.
-- `select_month`: Collects the consumption data from an arbitrary month parsed by the user.
+- `current`: Collects the current month consumption.
+- `previous`: Collects the previous month consumption data.
+- `select`: Collects the consumption data from an arbitrary month parsed by the user.
 
 ### Available databases:
 - `influxdb`: Loads the data in an InfluxDB database. (https://docs.influxdata.com/influxdb/v2/get-started/)

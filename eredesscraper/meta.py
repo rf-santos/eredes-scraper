@@ -20,6 +20,6 @@ cli_header = f"""
 {project['tool']['poetry']['description']}
 """
 
-supported_workflows = ["current_month", "last_month", "select_month"]
+supported_workflows = ["current", "previous", "select"]
 
 supported_databases = ["influxdb"]

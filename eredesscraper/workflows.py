@@ -8,16 +8,20 @@ from eredesscraper.db_clients import InfluxDB
 from eredesscraper.utils import parse_config
 
 
-def switchboard(name: str, db: str, config_path: Path, month: int, delta:bool = False) -> None:
+def switchboard(name: str, db: str, config_path: Path, month: int, year: int, delta: bool = False) -> None:
     """
     The run function is the entry point.
 
-    :param name: str: Specify which workflow to run. One of: ``current_month``
+    :param name: str: Specify which workflow to run. One of: ``current``
     :type name: str
     :param db: str: Specify which database to use. One of: ``influxdb``
     :type db: str
     :param config_path: Path: Specify the path to the config file
     :type config_path: pathlib.Path
+    :param month: int: Specify the month to load (1-12). [Required for ``select`` workflow]
+    :type month: int
+    :param year: int: Specify the year to load (YYYY). [Required for ``select`` workflow]
+    :type year: int
     :return: None
     :doc-author: Ricardo Filipe dos Santos
     """
@@ -31,34 +35,34 @@ def switchboard(name: str, db: str, config_path: Path, month: int, delta:bool = 
                f"CPE: {typer.style(config['eredes']['cpe'], fg=typer.colors.GREEN, bold=True)}")
 
     match name:
-        case 'current_month':
+        case 'current':
             bot = EredesScraper(
                 nif=config['eredes']['nif'],
                 password=config['eredes']['pwd'],
                 cpe_code=config['eredes']['cpe']
             )
             bot.setup()
-            bot.current_month()
+            bot.current()
             bot.teardown()
 
-        case 'last_month':
+        case 'previous':
             bot = EredesScraper(
                 nif=config['eredes']['nif'],
                 password=config['eredes']['pwd'],
                 cpe_code=config['eredes']['cpe']
             )
             bot.setup()
-            bot.last_month()
+            bot.previous()
             bot.teardown()
 
-        case 'select_month':
+        case 'select':
             bot = EredesScraper(
                 nif=config['eredes']['nif'],
                 password=config['eredes']['pwd'],
                 cpe_code=config['eredes']['cpe']
             )
             bot.setup()
-            bot.select_month(month=month)
+            bot.select(month=month, year=year)
             bot.teardown()
 
         case _:
