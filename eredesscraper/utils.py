@@ -268,4 +268,4 @@ def map_year_steps(date: datetime) -> int:
     Returns:
         int: The number of steps to reach the desired year
     """
-    return date.year - datetime.now().year
+    return datetime.now().year - date.year

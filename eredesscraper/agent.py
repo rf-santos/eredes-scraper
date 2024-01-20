@@ -294,13 +294,14 @@ class EredesScraper:
             t3 = progress.add_task(description=" 📊 Downloading your data...", total=None)
 
             time.sleep(20)
+            wait(self.driver, 30).until(EC.presence_of_element_located(
+                (By.XPATH, "//strong[contains(text(), 'Exportar excel')]")
+            ))
 
             self.driver.find_element(By.CSS_SELECTOR, ".ng-tns-c92-28 > .ng-untouched").click()
 
-            time.sleep(15)
-
             if prev_month.year < date.year:
-                self.driver.find_element(By.CSS_SELECTOR, ".ant-picker-super-prev-icon").click()
+                self.driver.find_element(By.XPATH, "//div[@id='cdk-overlay-4']/div/div/date-range-popup/div/div/div/inner-popup/div/div/month-header/div/button/span").click()
 
             try:
                 wait(self.driver, 60).until(EC.presence_of_element_located(
@@ -409,11 +410,15 @@ class EredesScraper:
             progress.remove_task(t2)
             t3 = progress.add_task(description=" 📊 Downloading your data...", total=None)
 
-            time.sleep(15)
+            time.sleep(20)
+            wait(self.driver, 30).until(EC.presence_of_element_located(
+                (By.XPATH, "//strong[contains(text(), 'Exportar excel')]")
+            ))
 
             self.driver.find_element(By.CSS_SELECTOR, ".ng-tns-c92-28 > .ng-untouched").click()
 
             time.sleep(15)
+
             if back_steps > 0:
                 for _ in range(back_steps):
                     self.driver.find_element(By.CSS_SELECTOR, ".ant-picker-super-prev-icon").click()
