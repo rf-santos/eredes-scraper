@@ -82,11 +82,12 @@ switchboard(name="current",
             config_path=Path("./config.yml")y
             delta=True)
 
-# get readings from May
+# get readings from May 2023
 switchboard(name="select",
             db="influxdb",
             config_path=Path("./config.yml"),
-            month=5)
+            month=5,
+            year=2023)
 ```
 
 ## Features
