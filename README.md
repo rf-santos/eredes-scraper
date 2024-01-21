@@ -105,7 +105,7 @@ switchboard(name="select",
 - [X] ~~Build CLI~~.
 - [ ] Containerize app.
 - [ ] Documentation.
-- [ ] Add CI/CD.
+- [X] ~~Add CI/CD~~.
 - [ ] Add logging.
 - [ ] Add tests.
 - [ ] Add runtime support for multiple CPEs.
