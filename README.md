@@ -54,8 +54,8 @@ ers run -d influxdb
 # get only deltas from last month readings 
 ers run -w previous -d influxdb --delta
 
-# get readings from May
-ers run -w select -d influxdb -m 5
+# get readings from May 2023
+ers run -w select -d influxdb -m 5 -y 2023
 ```
 
 ### Docker:
