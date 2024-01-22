@@ -2,13 +2,15 @@ name: Publish Python 🐍 distribution 📦 to PyPI and Github Release
 
 on:
   workflow_dispatch:
+    inputs:
+      
   push:
     tags:
     - '*'
 
 jobs:
   build-publish-release:
-    name: Build distribution 📦 publish to PyPI 🐍 and create GitHub Release
+    name: Build distribution 📦
     runs-on: ubuntu-latest
     permissions:
       # Used to authenticate to PyPI via OIDC.
@@ -43,24 +45,40 @@ jobs:
       - name: Mint token
         id: mint
         uses: tschm/token-mint-action@v1.0.2
-
-      - name: Publish the package with poetry
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: |
-          poetry publish -u __token__ -p '${{ steps.mint.outputs.api-token }}'
-
+        
       - name: Sign published artifacts
         uses: sigstore/gh-action-sigstore-python@v2.1.0
         with:
           inputs: ./dist/*.tar.gz ./dist/*.whl
           release-signing-artifacts: true
 
+      - name: Generate commit history
+        id: changelog
+        uses: metcalfc/changelog-generator@v4.2.0
+        with:
+          myToken: ${{ github.token }}
+
+      - name: Modify the changelog
+        id: modified
+        run: |
+          set -o noglob
+          log=$(cat << "EOF" | grep -v Bumping | tac
+          ${{ steps.changelog.outputs.changelog }}
+          EOF
+          )
+          log="${log//'%'/'%25'}"
+          log="${log//$'\n'/'%0A'}"
+          log="${log//$'\r'/'%0D'}"
+          echo "log=$log" >> $GITHUB_OUTPUT
+
       - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: >-
           gh release create
           '${{ github.ref_name }}'
-          --notes ""
+          --notes "${{ steps.modified.outputs.log }}"
+
       - name: Upload artifact signatures to GitHub Release
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -71,3 +89,10 @@ jobs:
           gh release upload
           '${{ github.ref_name }}' dist/**
           --repo '${{ github.repository }}'
+
+      - name: Publish the package with poetry
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          poetry publish -u __token__ -p '${{ steps.mint.outputs.api-token }}'
+    
