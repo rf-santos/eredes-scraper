@@ -5,7 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.9] - 2023-01-20
+
+### 💥 Breaking issues
+- A website update broke the workflows that targeted previous months. The issue was fixed 🥳
+
+### 👍 Improvements
+- The `previous_month` and `select_month` workflows were changed to `previous` and `select`, respectively.
+- The `select` workflow now requires a `year` argument.
+
+## [0.1.8] - 2023-12-12
+
+### 💥 Breaking issues
+- File downloaded from E-REDES had an extra column, and `parse_monthly_consumptions` function was failing. It is now more resilient to future column additions.
+
+### 👍 Improvements
+- Standerdized all dates to UTC before loading data.
+- Removed `influxdb` as a default value in the `ers` CLI
+- Started working on containerization
+- Updated tests & documentation
 
 ## [0.1.7] - 2023-11-04
 
