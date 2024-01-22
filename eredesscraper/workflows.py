@@ -1,5 +1,6 @@
 # package imports
 from pathlib import Path
+from datetime import datetime
 
 import typer
 
@@ -7,8 +8,11 @@ from eredesscraper.agent import EredesScraper
 from eredesscraper.db_clients import InfluxDB
 from eredesscraper.utils import parse_config
 
+date = datetime.now()
 
-def switchboard(name: str, db: str, config_path: Path, month: int, year: int, delta: bool = False) -> None:
+
+def switchboard(name: str, db: str, config_path: Path, month: int, year: int,
+                delta: bool = False) -> None:
     """
     The run function is the entry point.
 
@@ -22,9 +26,18 @@ def switchboard(name: str, db: str, config_path: Path, month: int, year: int, de
     :type month: int
     :param year: int: Specify the year to load (YYYY). [Required for ``select`` workflow]
     :type year: int
+    :param delta: bool: Specify if the data should be loaded as a delta. [Optional]
+    :type delta: bool
     :return: None
     :doc-author: Ricardo Filipe dos Santos
     """
+    if name not in ['current', 'previous', 'select']:
+        typer.echo(f"??\tWorkflow {typer.style(name, fg=typer.colors.GREEN)} not supported")
+        raise typer.Exit(code=1)
+
+    if name == 'select' and (month is None or year is None):
+        typer.echo(f"??\tSpecify both month and year for the {typer.style(name, fg=typer.colors.GREEN)} workflow")
+        raise typer.Exit(code=1)
 
     config = parse_config(config_path=config_path)
 

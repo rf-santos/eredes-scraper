@@ -79,7 +79,7 @@ from pathlib import Path
 # get deltas from current month readings
 switchboard(name="current",
             db="influxdb",
-            config_path=Path("./config.yml")y
+            config_path=Path("./config.yml"),
             delta=True)
 
 # get readings from May 2023
