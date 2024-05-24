@@ -6,15 +6,20 @@ from datetime import datetime
 from pathlib import Path
 from selenium import webdriver
 from typing import Union
+from pykwalify.core import Core
 
 import pandas as pd
 import yaml
 from selenium.webdriver.common.by import By
 
+from eredesscraper.backend import DuckDB
 
-def parse_monthly_consumptions(file_path: Path, cpe_code: str) -> pd.DataFrame:
+config_schema_path = Path(__file__).parent.parent / "schemas" / "config_schema.yml"
+
+
+def parse_readings_influx(file_path: Path, cpe_code: str) -> pd.DataFrame:
     """
-    The `parse_monthly_consumptions` function takes a XLSX file path retrieved from E-REDES and returns
+    The `parse_readings_influx` function takes a XLSX file path retrieved from E-REDES and returns
     a pandas DataFrame with the parsed data.
     An example for the retrieved file can be found in the `tests` folder.
     TZ is set to Europe/Lisbon
@@ -128,6 +133,29 @@ def struct_config(d: dict, sep: str = ".") -> dict:
     return items
 
 
+def validate_config(config_path: Path, schema_path: Path = config_schema_path) -> bool:
+    """
+    The validate_config function takes a YAML file and validates it against a schema file.
+    The schema file is a YAML file that follows the JSON Schema format.
+    The schema file is located in the `schemas` folder of the package.
+
+    :param config: Specify the path to the YAML to be validated
+    :type config: pathlib.Path
+    :param schema_path: Specify the path to the schema file
+    :type schema_path: pathlib.Path
+    :return: A boolean value indicating whether the dictionary is valid against the schema
+    :doc-author: Ricardo Filipe dos Santos
+    """
+    assert config_path.is_file(), f"Invalid file: {config_path}"
+    assert schema_path.is_file(), f"Invalid file: {schema_path}"
+    assert config_path.suffix == ".yml", f"Invalid file extension: {config_path.suffix}"
+    assert schema_path.suffix == ".yml", f"Invalid file extension: {schema_path.suffix}"
+    assert schema_path.exists(), f"Invalid file: {schema_path}"
+
+    c = Core(source_file=config_path.__str__(), schema_files=[schema_path.__str__()])
+    return c.validate()
+
+
 def parse_config(config_path: Path = Path.cwd() / "config.yml") -> dict:
     """
     Parses a YAML configuration file and returns its contents as a dictionary.
@@ -138,6 +166,8 @@ def parse_config(config_path: Path = Path.cwd() / "config.yml") -> dict:
     Returns:
         dict: The contents of the YAML configuration file as a dictionary.
     """
+    validate_config(config_path)
+
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
 
@@ -269,3 +299,29 @@ def map_year_steps(date: datetime) -> int:
         int: The number of steps to reach the desired year
     """
     return datetime.now().year - date.year
+
+
+def file2blob(file_path: Path) -> bytes:
+    """
+    The file2blob function takes a file path and returns the file as a blob.
+
+    Args:
+        file_path (pathlib.Path): The path to the file to be converted
+    Returns:
+        bytes: The file as a blob
+    """
+    with open(file_path, "rb") as f:
+        return f.read()
+
+
+def test_db_conn(db_path: str) -> bool:
+    """
+    Test the database connection.
+    """
+    try:
+        db = DuckDB(db_path)
+        db.query("SELECT 1")
+        db.__del__()
+        return True
+    except ConnectionError:
+        return False

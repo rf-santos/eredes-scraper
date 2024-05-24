@@ -9,7 +9,7 @@ from influxdb_client import WritePrecision
 from influxdb_client.client.exceptions import InfluxDBError
 from influxdb_client.client.write_api import SYNCHRONOUS
 
-from eredesscraper.utils import parse_monthly_consumptions
+from eredesscraper.utils import parse_readings_influx
 
 
 class InfluxDB:
@@ -18,13 +18,15 @@ class InfluxDB:
                  org,
                  bucket,
                  host: str = "http://localhost",
-                 port: int = 8086):
+                 port: int = 8086,
+                 quiet: bool = False):
         self.__bucket = bucket
         self.__host = host
         self.__port = port
         self.__url = str(self.__host) + ':' + str(self.__port)
         self.__token = token
         self.__org = org
+        self.__quiet = quiet
         self.client = None
         self.last_insert = None
         self.data = None
@@ -92,9 +94,11 @@ class InfluxDB:
                                                          debug=self.debug,
                                                          enable_gzip=False)
         except InfluxDBError:
-            typer.echo("💥\tError connecting to the InfluxDB database")
+            if not self.__quiet:
+                typer.echo("💥\tError connecting to the InfluxDB database")
         finally:
-            typer.echo(f"🔗\tConnected to the InfluxDB database at {self.__url}")
+            if not self.__quiet:
+                typer.echo(f"🔗\tConnected to the InfluxDB database at {self.__url}")
 
         return None
 
@@ -121,7 +125,7 @@ class InfluxDB:
         if delta:
             records = self.delta(source_data, cpe_code=cpe_code)
         else:
-            records = parse_monthly_consumptions(source_data, cpe_code=cpe_code)
+            records = parse_readings_influx(source_data, cpe_code=cpe_code)
 
         self.client.write_api(write_options=SYNCHRONOUS).write(bucket=self.__bucket,
                                                                org=self.__org,
@@ -133,16 +137,6 @@ class InfluxDB:
                                                                data_frame_write_precision=WritePrecision.S)
 
         self.client.close()
-
-        # remove the source_data .XLSX file and staging area
-        try:
-            source_data.unlink()
-            Path.rmdir(Path.cwd() / 'tmp')
-            typer.echo(f"💀\tRemoved the source data file and the staging area: {source_data}")
-        except PermissionError:
-            typer.echo("💥\tPermission denied to remove the staging area for the Scraper")
-
-        typer.echo(f"📈\tLoaded data from {source_data} into the InfluxDB database")
 
         return None
 
@@ -184,7 +178,7 @@ from(bucket: "{self.__bucket}")
 
     def delta(self, source_data: Path, cpe_code: str) -> pd.DataFrame:
         """
-        The ``delta`` method uses ``parse_monthly_consumptions`` function to get the source data into a pandas
+        The ``delta`` method uses ``parse_readings_influx`` function to get the source data into a pandas
         DataFrame and keep only the values that are more recent than the result of the ``get_last_insert`` method.
         The method returns the filtered DataFrame holding the most recent data not present in the DB bucket.
 
@@ -195,7 +189,7 @@ from(bucket: "{self.__bucket}")
         """
 
         # get the source data into a pandas DataFrame
-        df = parse_monthly_consumptions(source_data, cpe_code=cpe_code)
+        df = parse_readings_influx(source_data, cpe_code=cpe_code)
 
         # filter out the data points that are already present in the DB bucket
         df = df[df.index > self.get_last_insert(cpe_code=cpe_code)]

@@ -4,10 +4,14 @@ from typing import Optional
 import typer
 import yaml
 
-from eredesscraper.utils import parse_config, flatten_config, struct_config, infer_type
+from eredesscraper.utils import parse_config, validate_config, flatten_config, struct_config, infer_type
 from eredesscraper.workflows import switchboard
 from eredesscraper.meta import cli_header, supported_workflows, supported_databases
 from eredesscraper._version import get_version
+from eredesscraper.server import start_api_server
+from eredesscraper.backend import db_path
+
+stateless = True
 
 appdir = typer.get_app_dir(app_name="ers")
 config_path = Path(appdir) / "cache" / "config.yml"
@@ -20,29 +24,27 @@ app = typer.Typer(name="ers",
                   epilog="For more information, please visit https://github.com/rf-santos/eredes-scraper",
                   context_settings={"allow_extra_args": True})
 
-@app.command(help="Show the current version")
-def version():
-    """Show the current version"""
-    typer.echo(f"Version: {get_version()}")
 
-# TODO: Preform an initial step to guide users through the setup process
-# @app.command(help="Initialize the program with a CLI wizard")
-# def init():
-#     """Initialize the program with a CLI wizard"""
-#
-#     typer.echo("Welcome to E-REDES Scraper!")
-#     typer.echo("Please follow the instructions to set up the program.")
-#     typer.echo("Press Ctrl+C at any time to exit the wizard.")
-#     typer.echo("")
-#     typer.echo("First, we need to set up the config file. "
-#                "See the template `config.yml` at github.com/rf-santos/eredes-scraper for reference.")
-#     typer.echo("")
-#     typer.echo("Please enter the path to the config file:")
-#     config_path = typer.prompt("Path to config file", default="config.yml")
-#     assert Path(config_path).exists(), "File not found. Please check the path and try again."
-#     assert Path(config_path).is_file(), "Please enter a valid file path."
-#     load(config_path)
-#     typer.echo("Config file loaded successfully.")
+@app.callback()
+def main(ctx: typer.Context, quiet: bool = typer.Option(False, "--quiet", "-q", help="Run in non-interactive mode")):
+    """Main entry point for the CLI."""
+    ctx.ensure_object(dict)
+    ctx.obj["quiet"] = quiet
+
+
+@app.command(help="Show the current version")
+def version(ctx: typer.Context):
+    """Show the current version"""
+    if not ctx.obj["quiet"]:
+        typer.echo(f"Version: {get_version()}")
+
+
+@app.command(help="Get information about the available workflows and databases")
+def info(ctx: typer.Context):
+    """Get information about the available workflows and databases"""
+    if not ctx.obj["quiet"]:
+        typer.echo(f"Supported workflows: {supported_workflows}")
+        typer.echo(f"Supported databases: {supported_databases}")
 
 
 @app.command(help="Run the scraper workflow. Can directly load data onto supported databases.")
@@ -51,7 +53,7 @@ def run(workflow: str = typer.Option("current",
                                      help=f"Specify one of the supported workflows: {supported_workflows}"),
         db: str = typer.Option(None,
                                "--database", "--db", "-d",
-                               help=f"Specify one of the supported databases: {supported_databases}"),
+                               help=f"Specify a comma separated list of databases: {supported_databases}"),
         month: Optional[int] = typer.Option(None,
                                             "--month", "-m",
                                             help="Specify the month to load (1-12). "
@@ -63,7 +65,15 @@ def run(workflow: str = typer.Option("current",
                                            show_default=False),
         delta: Optional[bool] = typer.Option(False,
                                              "--delta", "-D",
-                                             help="Load only the most recent data points")):
+                                             help="Load only the most recent data points"),
+        keep: Optional[bool] = typer.Option(False,
+                                            "--keep", "-k",
+                                            help="If set, keeps the source data file after loading",
+                                            show_default=False),
+        output: Optional[str] = typer.Option(Path.cwd() / ".ers", "--output", "-o",
+                                             help="Specify the output folder path",
+                                             show_default=True),
+        ctx: typer.Context = typer.Option(None, callback=main)):
     """Run a workflow from a config file"""
     config = Path(appdir) / "cache" / "config.yml"
     assert Path(
@@ -71,16 +81,25 @@ def run(workflow: str = typer.Option("current",
     f"Run {typer.style('ers config load </path/to/config.yml>', fg=typer.colors.GREEN)} to load it."
 
     if db is None:
-        db = ""
+        db = []
+    else:
+        db = db.strip().split(",")
+        # remove any whitespace
+        db = [x.strip() for x in db]
 
-    switchboard(
+    result = switchboard(
         config_path=config.resolve(),
         name=workflow,
         db=db,
         month=month,
         year=year,
-        delta=delta
+        delta=delta,
+        keep=keep,
+        quiet=ctx.obj["quiet"]
     )
+
+    if not ctx.obj["quiet"]:
+        typer.echo(result)
 
 
 config_app = typer.Typer(name="config",
@@ -99,42 +118,49 @@ def load(config: str = typer.Argument(resolve_path=True,
                                       dir_okay=False,
                                       writable=True,
                                       readable=True,
-                                      help="Path to the config file"
-                                      )
-         ):
+                                      help="Path to the config file"),
+         ctx: typer.Context = typer.Option(None, callback=main)):
     try:
         config_path = Path(config).resolve()
+
+        if not validate_config(config_path):
+            if not ctx.obj["quiet"]:
+                typer.echo("💥\tInvalid configuration file. Please check the configuration schema and try again.")
+            raise typer.Exit(code=1)
 
         Path.mkdir(Path(appdir) / "cache", parents=True, exist_ok=True)
 
         cache = Path(appdir) / "cache"
-
-        typer.echo(f"⚙️\tLoading configuration from file: {config_path}")
+        if not ctx.obj["quiet"]:
+            typer.echo(f"⚙️\tLoading configuration from file: {config_path}")
 
         with open(config_path, "r") as f:
             tmp_config = yaml.safe_load(f)
 
         with open(cache / "config.yml", "w") as f:
             yaml.dump(tmp_config, f)
-
-        typer.echo("✅\tConfig file loaded successfully.")
+        if not ctx.obj["quiet"]:
+            typer.echo("✅\tConfig file loaded successfully.")
 
     except FileNotFoundError:
-        typer.echo("💥\tFile not found. Please check the path and try again.")
+        if not ctx.obj["quiet"]:
+            typer.echo("💥\tFile not found. Please check the path and try again.")
         raise typer.Exit(code=1)
 
 
 @config_app.command(help="Show the current configuration")
-def show():
+def show(ctx: typer.Context = typer.Option(None, callback=main)):
     """Show the current configuration"""
     try:
         config = parse_config(Path(appdir) / "cache" / "config.yml")
-        typer.echo("")
-        typer.echo("⚙️\tCurrent configuration (cached):")
-        typer.echo("")
-        typer.echo(yaml.dump(config), color=True)
+        if not ctx.obj["quiet"]:
+            typer.echo("")
+            typer.echo("⚙️\tCurrent configuration (cached):")
+            typer.echo("")
+            typer.echo(yaml.dump(config), color=True)
     except FileNotFoundError:
-        typer.echo("No config file found. Please run `ers config load /path/to/config.yml` to set a config file.")
+        if not ctx.obj["quiet"]:
+            typer.echo("No config file found. Please run `ers config load /path/to/config.yml` to set a config file.")
         raise typer.Exit(code=1)
 
 
@@ -142,7 +168,7 @@ def show():
                     options_metavar="<KEY>[.<SUBKEY>] <VALUE>",
                     no_args_is_help=True,
                     epilog="Example: ers config set influxdb.host \"http://localhost\"")
-def set(key: str, value: str):
+def set(key: str, value: str, ctx: typer.Context = typer.Option(None, callback=main)):
     """
     Set a configuration value
 
@@ -155,7 +181,8 @@ def set(key: str, value: str):
     try:
         config = flatten_config(parse_config(Path(appdir) / "cache" / "config.yml"))
     except FileNotFoundError:
-        typer.echo("No config file found. Please run `ers config file </path/to/config.yml>` to set a config file.")
+        if not ctx.obj["quiet"]:
+            typer.echo("No config file found. Please run `ers config file </path/to/config.yml>` to set a config file.")
         raise typer.Exit(code=1)
 
     assert key in config.keys(), f"Unsupported key {key} not found in config file.\nKeys: {list(config.keys())}"
@@ -164,8 +191,37 @@ def set(key: str, value: str):
 
     with open(Path(appdir) / "cache" / "config.yml", "w") as f:
         yaml.dump(struct_config(config), f)
+    if not ctx.obj["quiet"]:
+        typer.echo(
+            f"✅\tKey {typer.style(key, fg=typer.colors.GREEN)} set to {typer.style(value, fg=typer.colors.GREEN)}.")
 
-    typer.echo(f"✅\tKey {typer.style(key, fg=typer.colors.GREEN)} set to {typer.style(value, fg=typer.colors.GREEN)}.")
+
+@app.command(help="Start the application webserver")
+def server(
+        ctx: typer.Context,
+        port: Optional[int] = typer.Option(8778, "--port", "-p",
+                                           help="Specify the port to run the webserver on"),
+        host: Optional[str] = typer.Option("127.0.0.1", "--host", "-H",
+                                           help="Specify the host to run the webserver on"),
+        reload: Optional[bool] = typer.Option(False, "--reload", "-r",
+                                              help="Enable auto-reload"),
+        debug: Optional[bool] = typer.Option(False, "--debug", "-d",
+                                             help="Enable debug mode"),
+        storage: Optional[str] = typer.Option(db_path.parent.absolute().as_posix(), "--storage", "-S",
+                                              help="Specify the storage path to persist the API state")):
+    """Start the application webserver"""
+
+    try:
+        Path.mkdir(Path(storage), parents=True, exist_ok=True)
+    except NotADirectoryError:
+        typer.echo("💥\tInvalid storage path. Please check the path and try again.")
+        raise typer.Exit(code=1)
+
+    if not ctx.obj["quiet"]:
+        typer.echo("Starting the webserver...")
+        typer.echo(f"Running in stateful mode. This will persist data in {storage}")
+
+    start_api_server(port=port, host=host, reload=reload, debug=debug)
 
 
 if __name__ == "__main__":
