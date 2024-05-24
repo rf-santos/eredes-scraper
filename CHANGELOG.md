@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.8] - 2023-12-12
 
 ### 💥 Breaking issues
-- File downloaded from E-REDES had an extra column, and `parse_monthly_consumptions` function was failing. It is now more resilient to future column additions.
+- File downloaded from E-REDES had an extra column, and `parse_readings_influx` function was failing. It is now more resilient to future column additions.
 
 ### 👍 Improvements
 - Standerdized all dates to UTC before loading data.
