@@ -1,17 +1,19 @@
+import locale
+import math
 import os
 import time
+from playwright.sync_api import Page
 from pytz import UTC
 from collections.abc import MutableMapping
 from datetime import datetime
 from pathlib import Path
-from selenium import webdriver
 from typing import Union
 from pykwalify.core import Core
 
 import pandas as pd
 import yaml
-from selenium.webdriver.common.by import By
 
+from eredesscraper.meta import en_pt_month_map
 from eredesscraper.backend import DuckDB
 
 config_schema_path = Path(__file__).parent.parent / "schemas" / "config_schema.yml"
@@ -174,31 +176,32 @@ def parse_config(config_path: Path = Path.cwd() / "config.yml") -> dict:
     return config
 
 
-def save_screenshot(driver: webdriver, path: str = '.', name: str = 'screenshot') -> None:
-    """
-    Saves a screenshot of the current webpage displayed in the given WebDriver instance.
+# Legacy function to create screenshot with Selenium WebDriver
+# def save_screenshot(driver: webdriver, path: str = '.', name: str = 'screenshot') -> None:
+#     """
+#     Saves a screenshot of the current webpage displayed in the given WebDriver instance.
 
-    Args:
-        driver (selenium.WebDriver): The WebDriver instance to use for taking the screenshot.
-        path (str, optional): The file path to save the screenshot to. Defaults to 'screenshot.png'.
-    """
-    try:
-        path = Path(path).resolve()
-        assert path.is_dir(), f"Invalid directory: {path}"
-        path.mkdir(parents=True, exist_ok=True)
-    except PermissionError:
-        print("Permission denied to create a directory for the screenshot")
+#     Args:
+#         driver (selenium.WebDriver): The WebDriver instance to use for taking the screenshot.
+#         path (str, optional): The file path to save the screenshot to. Defaults to 'screenshot.png'.
+#     """
+#     try:
+#         path = Path(path).resolve()
+#         assert path.is_dir(), f"Invalid directory: {path}"
+#         path.mkdir(parents=True, exist_ok=True)
+#     except PermissionError:
+#         print("Permission denied to create a directory for the screenshot")
 
-    name = name.replace(' ', '_') + '.png'
+#     name = name.replace(' ', '_') + '.png'
 
-    path = path / name
+#     path = path / name
 
-    original_size = driver.get_window_size()
-    required_width = driver.execute_script('return document.body.parentNode.scrollWidth')
-    required_height = driver.execute_script('return document.body.parentNode.scrollHeight')
-    driver.set_window_size(required_width, required_height)
-    driver.find_element(By.TAG_NAME, "body").screenshot(path.__str__())
-    driver.set_window_size(original_size['width'], original_size['height'])
+#     original_size = driver.get_window_size()
+#     required_width = driver.execute_script('return document.body.parentNode.scrollWidth')
+#     required_height = driver.execute_script('return document.body.parentNode.scrollHeight')
+#     driver.set_window_size(required_width, required_height)
+#     driver.find_element(By.TAG_NAME, "body").screenshot(path.__str__())
+#     driver.set_window_size(original_size['width'], original_size['height'])
 
 
 def wait_for_download(directory, timeout, nfiles=None):
@@ -288,6 +291,24 @@ def map_month_matrix(date: datetime) -> tuple:
     return row, column
 
 
+def map_month_matrix_names(date: datetime) -> str:
+    """
+    The map_month_matrix_names function takes a datetime object and returns the month name.
+    This maps to the month selection popup table in the E-REDES website consumption history.
+
+    Args:
+        date (datetime.datetime): Specify the month to be mapped
+    Returns:
+        str: The month name
+    """
+    try:
+        locale.setlocale(locale.LC_TIME, 'pt_PT.UTF-8')
+    except locale.Error:
+        return en_pt_month_map[str(date.month)]
+        
+    return date.strftime("%b").lower() + "."
+
+
 def map_year_steps(date: datetime) -> int:
     """
     The map_year_steps function takes a datetime object and returns the number of steps to reach the desired year.
@@ -325,3 +346,26 @@ def test_db_conn(db_path: str) -> bool:
         return True
     except ConnectionError:
         return False
+
+
+def pw_nav_year_back(date: datetime, pw_page: Page, call_counter: int = 0) -> None:
+    """
+    Navigate back in the year selection popup table in the E-REDES website consumption history.
+
+    Args:
+        date (datetime.datetime): The target date of the data to be retrieved
+        pw_page (playwright.sync_api.Page): The Playwright page object
+    """
+    max_steps_back = math.ceil((datetime.now().year - date.year) / 12)
+
+    if call_counter > max_steps_back:
+        raise ValueError("Year not found in records")
+
+    for _ in range(max_steps_back):
+        if not pw_page.get_by_text(f"{date.year}", exact=True).is_visible():
+            pw_page.get_by_role("button", name="Ano anterior (Control + left)").click()
+            call_counter += 1
+            pw_page = pw_nav_year_back(date, pw_page, call_counter)
+
+        return pw_page
+    

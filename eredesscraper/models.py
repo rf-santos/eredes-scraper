@@ -87,3 +87,47 @@ class ConfigSetRequest(BaseModel):
     """
     key: str
     value: str
+
+
+class Eredes(BaseModel):
+    """
+    Represents an Eredes object.
+
+    Attributes:
+        nif (int): The NIF (Número de Identificação Fiscal) of the Eredes.
+        pwd (str): The password associated with the Eredes.
+        cpe (str): The CPE (Customer Premises Equipment) of the Eredes.
+    """
+    nif: int
+    pwd: str
+    cpe: str
+
+
+class InfluxDB(BaseModel):
+    """
+    Represents a connection to an InfluxDB database.
+
+    Attributes:
+        host (str): The hostname or IP address of the InfluxDB server.
+        port (int): The port number of the InfluxDB server.
+        bucket (str): The name of the bucket in the InfluxDB database.
+        org (str): The name of the organization in the InfluxDB database.
+        token (str): The authentication token for accessing the InfluxDB database.
+    """
+    host: str
+    port: int
+    bucket: str
+    org: str
+    token: str
+
+
+class Config(BaseModel):
+    """
+    Represents the configuration settings for the application.
+    
+    Attributes:
+        eredes (Eredes): The Eredes configuration.
+        influxdb (InfluxDB): The InfluxDB configuration.
+    """
+    eredes: Eredes
+    influxdb: InfluxDB
