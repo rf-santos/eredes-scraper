@@ -1,10 +1,11 @@
+import io
 from pathlib import Path
 
 import requests
 import yaml
 import json
 from fastapi import BackgroundTasks, FastAPI, HTTPException, UploadFile, File, Depends
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.openapi.utils import get_openapi
 from uuid import uuid4
 from typer import get_app_dir
@@ -15,7 +16,7 @@ from eredesscraper.meta import supported_workflows, supported_databases
 from eredesscraper.utils import parse_config, flatten_config, struct_config, infer_type, file2blob
 from eredesscraper.workflows import switchboard
 from eredesscraper.models import WorkflowRequestRecord, TaskstatusRecord, RunWorkflowRequest, ConfigSetRequest, \
-    ConfigLoadRequest
+    ConfigLoadRequest, Config
 from eredesscraper.backend import DuckDB, db_path
 
 appdir = get_app_dir(app_name="ers")
@@ -29,8 +30,8 @@ app = FastAPI(
 )
 
 
-def get_db(db_path: str = db_path):
-    ddb = DuckDB(db_path=db_path)
+def get_db():
+    ddb = DuckDB()
 
     return ddb
 
@@ -209,7 +210,7 @@ def get_status(task_id: str, ddb=Depends(get_db)):
     
     ts = TaskstatusRecord(task_id=record[0],
                           status=record[1],
-                          file=record[2],
+                          file="File found. Download file with the `download` API method" if record[2] else None,
                           created=record[3],
                           updated=record[4])
 
@@ -228,11 +229,9 @@ def get_file(task_id: str, ddb=Depends(get_db)):
                             file=record[2],
                             created=record[3],
                             updated=record[4])
+    filename = f"{ts.created.strftime('%Y-%m-%d')}_{ts.task_id.hex.split('-')[0]}_readings.xlsx"
     
-    
-    filename = f"{ts.created.strftime('%Y-%m-%d')}_{ts.task_id.split('-')[0]}_readings.xlsx"
-    
-    return FileResponse(ts.file, media_type="application/octet-stream", filename=filename)
+    return StreamingResponse(io.BytesIO(ts.file), media_type="application/octet-stream", headers={"Content-Disposition": f"attachment; filename={filename}"})
     
 
 @app.post("/config/load", summary="Loads a local config file into the program")
@@ -267,6 +266,12 @@ async def load_config_from_url(url: str):
 
         if response.status_code == 200:
             tmp_config = yaml.safe_load(response.text)
+
+            # assert tmp_config schema is the same as the Config model
+            try:
+                Config(**tmp_config)
+            except Exception as e:
+                raise HTTPException(status_code=400, detail=str(e))
 
             with open(cache / "config.yml", "w") as f:
                 yaml.dump(tmp_config, f)

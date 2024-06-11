@@ -14,9 +14,6 @@ user_config_path = Path().home() / ".ers"
 Path.mkdir(user_config_path, exist_ok=True)
 
 date = datetime.now()
-last_month = date - timedelta(days=date.day)
-
-session_result = {}
 
 
 class ERSSession():
@@ -80,7 +77,7 @@ class ERSSession():
 
 def switchboard(name: str, db: list, config_path: Path, month: int = date.month, year: int = date.year,
                 delta: bool = False, keep: bool = False, quiet: bool = False, output: Path = Path.home() / ".ers",
-                uuid: uuid4 = uuid4()) -> ERSSession:
+                uuid: uuid4 = uuid4(), headless: bool = True) -> ERSSession:
     """
     The run function is the entry point.
 
@@ -107,6 +104,9 @@ def switchboard(name: str, db: list, config_path: Path, month: int = date.month,
     :return: ERSSession: The result object of the workflow run.
     :doc-author: Ricardo Filipe dos Santos
     """
+
+    date = datetime.now()
+
     if name not in ['current', 'previous', 'select']:
         if not quiet:
             typer.echo(f"??\tWorkflow {typer.style(name, fg=typer.colors.GREEN)} not supported")
@@ -124,43 +124,25 @@ def switchboard(name: str, db: list, config_path: Path, month: int = date.month,
         typer.echo(f"📇\tE-REDES client info: "
                    f"NIF: {typer.style(config['eredes']['nif'], fg=typer.colors.GREEN, bold=True)}, "
                    f"CPE: {typer.style(config['eredes']['cpe'], fg=typer.colors.GREEN, bold=True)}")
+        
+    bot = EredesScraper(
+                nif=config['eredes']['nif'],
+                password=config['eredes']['pwd'],
+                cpe_code=config['eredes']['cpe'],
+                quiet=quiet,
+                headless=headless,
+                uuid=uuid
+            )
 
     match name:
         case 'current':
-            bot = EredesScraper(
-                nif=config['eredes']['nif'],
-                password=config['eredes']['pwd'],
-                cpe_code=config['eredes']['cpe'],
-                quiet=quiet,
-                uuid=uuid
-            )
-            bot.setup()
-            bot.readings(month=last_month.month, year=last_month.year)
-            bot.teardown()
+            bot.run(month=date.month, year=date.year)
 
         case 'previous':
-            bot = EredesScraper(
-                nif=config['eredes']['nif'],
-                password=config['eredes']['pwd'],
-                cpe_code=config['eredes']['cpe'],
-                quiet=quiet,
-                uuid=uuid
-            )
-            bot.setup()
-            bot.readings(month=date.month - 1, year=date.year)
-            bot.teardown()
+            bot.run(month=date.month - 1, year=date.year)
 
         case 'select':
-            bot = EredesScraper(
-                nif=config['eredes']['nif'],
-                password=config['eredes']['pwd'],
-                cpe_code=config['eredes']['cpe'],
-                quiet=quiet,
-                uuid=uuid
-            )
-            bot.setup()
-            bot.readings(month=month, year=year)
-            bot.teardown()
+            bot.run(month=month, year=year)
 
         case _:
             if not quiet:
