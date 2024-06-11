@@ -3,7 +3,7 @@
   "info": {
     "title": "E-REDES Scraper API",
     "description": "An API to interact with the E-REDES Scraper application",
-    "version": "0.1.1.post60.dev1",
+    "version": "0.1.1.post62.dev1",
     "x-logo": {
       "url": "https://raw.githubusercontent.com/rf-santos/eredes-scraper/master/static/logo.jpeg"
     }
@@ -45,27 +45,15 @@
       "post": {
         "summary": "Run the scraper workflow",
         "operationId": "run_workflow_run_post",
-        "parameters": [
-          {
-            "name": "db_path",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "C:\\Users\\ricardo.d.santos\\.ers\\ers.db",
-              "title": "Db Path"
-            }
-          }
-        ],
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/RunWorkflowRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -93,27 +81,15 @@
       "post": {
         "summary": "Run the scraper workflow asynchronously",
         "operationId": "run_workflow_async_run_async_post",
-        "parameters": [
-          {
-            "name": "db_path",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "C:\\Users\\ricardo.d.santos\\.ers\\ers.db",
-              "title": "Db Path"
-            }
-          }
-        ],
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/RunWorkflowRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -149,16 +125,6 @@
             "schema": {
               "type": "string",
               "title": "Task Id"
-            }
-          },
-          {
-            "name": "db_path",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "C:\\Users\\ricardo.d.santos\\.ers\\ers.db",
-              "title": "Db Path"
             }
           }
         ],
@@ -196,16 +162,6 @@
             "schema": {
               "type": "string",
               "title": "Task Id"
-            }
-          },
-          {
-            "name": "db_path",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "C:\\Users\\ricardo.d.santos\\.ers\\ers.db",
-              "title": "Db Path"
             }
           }
         ],
