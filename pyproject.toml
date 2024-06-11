@@ -1,14 +1,14 @@
 [tool.poetry]
 name = "eredesscraper"
 version = "0"
-description = "Selenium-based web scraper to extract data from E-REDES website and load it into database storage."
+description = "Web scraper to extract data from E-REDES website and load it into database storage."
 authors = ["Ricardo Filipe dos Santos <ricardofilipecdsantos@gmail.com>"]
 license = "MIT"
 readme = "README.md"
 homepage = "https://github.com/rf-santos/eredes-scraper"
 repository = "https://github.com/rf-santos/eredes-scraper"
 documentation = "https://github.com/rf-santos/eredes-scraper"
-keywords = ["selenium", "web", "scraper", "influxdb", "database", "electricity", "energy", "e-redes"]
+keywords = ["web", "scraper", "influxdb", "database", "electricity", "energy", "e-redes"]
 include = ["README.md", "CHANGELOG.md", "LICENSE", "pyproject.toml", "config.yml", "requirements.txt", "tests/**", "schemas/**"]
 
 [tool.poetry.dependencies]
@@ -17,14 +17,14 @@ influxdb-client = "^1.38.0"
 openpyxl = "^3.1.2"
 pandas = "^2.1.1"
 pyyaml = "^6.0.1"
-selenium = "^4.14.0"
-webdriver-manager = "^4.0.1"
 typer = {extras = ["all"], version = "^0.9.0"}
 fastapi = "^0.110.0"
 uvicorn = "^0.28.0"
 python-multipart = "^0.0.9"
 pykwalify = "^1.8.0"
 duckdb = "^0.10.2"
+playwright = "^1.44.0"
+playwright-stealth = "^1.0.6"
 
 [tool.poetry.group.dev.dependencies]
 ipython = "^8.17.2"
