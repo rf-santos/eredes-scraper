@@ -1,6 +1,7 @@
 import datetime
 import re
 from pathlib import Path
+import sys
 from time import sleep
 from random import randint
 from uuid import uuid4
@@ -218,10 +219,11 @@ class EredesScraper:
     
     
     def run(self, month, year):
+        ua = user_agent_list[randint(0, len(user_agent_list) - 1)]
         with sync_playwright() as p:
             self.browser = p.webkit.launch(headless=self.headless, downloads_path=self.tmp)
             self.context = self.browser.new_context(
-                user_agent=user_agent_list[randint(0, len(user_agent_list) - 1)]
+                user_agent=ua
             )
             self.context.set_default_timeout(self.__implicit_wait * 1000)
             self.page = self.context.new_page()

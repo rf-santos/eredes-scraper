@@ -206,6 +206,7 @@ def switchboard(name: str, db: list, config_path: Path, month: int = date.month,
         out = Path(output / bot.session_id.__str__())
         Path.mkdir(out, exist_ok=True, parents=True)
         os.rename(bot.dwnl_file, out / bot.dwnl_file.name)
+        os.unlink(bot.dwnl_file)
         bot.dwnl_file = Path(out / bot.dwnl_file.name)
         if not quiet:
             typer.echo(f"📂\tSource data file written to: {bot.dwnl_file}")
