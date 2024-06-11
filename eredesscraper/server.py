@@ -4,7 +4,7 @@ from eredesscraper.utils import test_db_conn
 from eredesscraper.backend import db_path
 
 
-def start_api_server(port: int = 8778, host: str = "127.0.0.1", reload: bool = True, debug: bool = False):
+def start_api_server(port: int = 8778, host: str = "0.0.0.0", reload: bool = True, debug: bool = False):
 
     db_active = test_db_conn(db_path.absolute().as_posix())
 

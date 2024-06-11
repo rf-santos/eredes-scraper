@@ -11,8 +11,6 @@ from eredesscraper._version import get_version
 from eredesscraper.server import start_api_server
 from eredesscraper.backend import db_path
 
-stateless = True
-
 appdir = typer.get_app_dir(app_name="ers")
 config_path = Path(appdir) / "cache" / "config.yml"
 
@@ -22,6 +20,7 @@ app = typer.Typer(name="ers",
                   add_help_option=True,
                   no_args_is_help=True,
                   epilog="For more information, please visit https://github.com/rf-santos/eredes-scraper",
+                  pretty_exceptions_show_locals=False,
                   context_settings={"allow_extra_args": True})
 
 
@@ -73,6 +72,9 @@ def run(workflow: str = typer.Option("current",
         output: Optional[str] = typer.Option(Path.cwd() / ".ers", "--output", "-o",
                                              help="Specify the output folder path",
                                              show_default=True),
+        headless: Optional[bool] = typer.Option(True,
+                                                "--headless", "-H",
+                                                help="Disable headless mode"),
         ctx: typer.Context = typer.Option(None, callback=main)):
     """Run a workflow from a config file"""
     config = Path(appdir) / "cache" / "config.yml"
@@ -95,6 +97,7 @@ def run(workflow: str = typer.Option("current",
         year=year,
         delta=delta,
         keep=keep,
+        headless=headless,
         quiet=ctx.obj["quiet"]
     )
 
@@ -201,7 +204,7 @@ def server(
         ctx: typer.Context,
         port: Optional[int] = typer.Option(8778, "--port", "-p",
                                            help="Specify the port to run the webserver on"),
-        host: Optional[str] = typer.Option("127.0.0.1", "--host", "-H",
+        host: Optional[str] = typer.Option("0.0.0.0", "--host", "-H",
                                            help="Specify the host to run the webserver on"),
         reload: Optional[bool] = typer.Option(False, "--reload", "-r",
                                               help="Enable auto-reload"),
