@@ -38,12 +38,13 @@ jobs:
       - name: Run pytest
         uses: pavelzw/pytest-action@v2
         with:
+          custom-pytest: 'poetry run pytest'
           verbose: true
           emoji: true
           job-summary: true
           custom-arguments: '-q'
           click-to-expand: true
-          report-title: 'Pytest Report'
+          report-title: 'Pytest Report 🧪'
 
       - name: Build package
         run: |
