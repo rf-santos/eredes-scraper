@@ -10,7 +10,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from playwright.sync_api import sync_playwright
 from playwright_stealth import stealth_sync
 
-from eredesscraper.utils import map_month_matrix_names, pw_nav_year_back
+from eredesscraper.utils import get_screen_resolution, map_month_matrix_names, pw_nav_year_back
 from eredesscraper.meta import user_agent_list
 
 ENTRYPOINT = "https://balcaodigital.e-redes.pt/consumptions/history"
@@ -220,10 +220,14 @@ class EredesScraper:
     
     def run(self, month, year):
         ua = user_agent_list[randint(0, len(user_agent_list) - 1)]
+        # get system screen resolution
+
         with sync_playwright() as p:
             self.browser = p.webkit.launch(headless=self.headless, downloads_path=self.tmp)
             self.context = self.browser.new_context(
-                user_agent=ua
+                # user_agent=ua,
+                viewport={"width": get_screen_resolution()[0], "height": get_screen_resolution()[1]},
+                screen={"width": get_screen_resolution()[0], "height": get_screen_resolution()[1]}
             )
             self.context.set_default_timeout(self.__implicit_wait * 1000)
             self.page = self.context.new_page()

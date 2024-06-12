@@ -69,10 +69,10 @@ class TaskstatusRecord(BaseModel):
 
 class ConfigLoadRequest(BaseModel):
     """
-    A Pydantic model representing a request to load a configuration.
+    A Pydantic model representing a request to load a configuration from a YAML string.
 
     Attributes:
-        config (str): The configuration to load.
+        config (str): The configuration in YAML format.
     """
     config: str
 

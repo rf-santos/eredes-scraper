@@ -234,19 +234,15 @@ def get_file(task_id: str, ddb=Depends(get_db)):
     return StreamingResponse(io.BytesIO(ts.file), media_type="application/octet-stream", headers={"Content-Disposition": f"attachment; filename={filename}"})
     
 
-@app.post("/config/load", summary="Loads a local config file into the program")
+@app.post("/config/load", summary="Loads a YAML string as a config file into the program")
 def load_config(request: ConfigLoadRequest):
     try:
-        config_path = Path(request.config).resolve()
 
-        Path.mkdir(Path(appdir) / "cache", parents=True, exist_ok=True)
+        tmp_config = yaml.safe_load(request.config)
 
-        cache = Path(appdir) / "cache"
+        assert Config(**tmp_config), "Config file schema is not valid"
 
-        with open(config_path, "r") as f:
-            tmp_config = yaml.safe_load(f)
-
-        with open(cache / "config.yml", "w") as f:
+        with open(config_path, "w") as f:
             yaml.dump(tmp_config, f)
 
         return {"detail": "Config file loaded successfully"}

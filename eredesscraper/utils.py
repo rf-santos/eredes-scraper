@@ -9,6 +9,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Union
 from pykwalify.core import Core
+from screeninfo import get_monitors
 
 import pandas as pd
 import yaml
@@ -369,3 +370,14 @@ def pw_nav_year_back(date: datetime, pw_page: Page, call_counter: int = 0) -> No
 
         return pw_page
     
+from screeninfo import get_monitors
+
+def get_screen_resolution():
+    """
+    Returns the screen resolution of the primary monitor.
+
+    Returns:
+        tuple: A tuple containing the width and height of the screen resolution.
+    """
+    monitor = get_monitors()[0]
+    return monitor.width, monitor.height

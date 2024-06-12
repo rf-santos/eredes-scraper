@@ -204,7 +204,7 @@ def server(
         ctx: typer.Context,
         port: Optional[int] = typer.Option(8778, "--port", "-p",
                                            help="Specify the port to run the webserver on"),
-        host: Optional[str] = typer.Option("0.0.0.0", "--host", "-H",
+        host: Optional[str] = typer.Option("localhost", "--host", "-H",
                                            help="Specify the host to run the webserver on"),
         reload: Optional[bool] = typer.Option(False, "--reload", "-r",
                                               help="Enable auto-reload"),
