@@ -1,4 +1,4 @@
-name: Codacy Security Scan
+name: Pytest Report 🧪
 
 on:
   push:
