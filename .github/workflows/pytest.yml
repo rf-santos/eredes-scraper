@@ -29,6 +29,11 @@ jobs:
       with:
         python-version: '3.11'
 
+    - name: Install Poetry
+      uses: snok/install-poetry@v1.3.3
+      with:
+        virtualenvs-create: false
+
     - name: Run pytest
       uses: pavelzw/pytest-action@v2
       with:
