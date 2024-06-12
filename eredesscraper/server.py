@@ -1,12 +1,12 @@
 import uvicorn
 
-from eredesscraper.utils import test_db_conn
+from eredesscraper.utils import db_conn
 from eredesscraper.backend import db_path
 
 
 def start_api_server(port: int = 8778, host: str = "localhost", reload: bool = True, debug: bool = False):
 
-    db_active = test_db_conn(db_path.absolute().as_posix())
+    db_active = db_conn(db_path.absolute().as_posix())
 
     assert db_active, "Database connection failed. Please check the connection and try again."
 

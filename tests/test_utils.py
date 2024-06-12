@@ -1,8 +1,9 @@
 import pytest
 from pytz import UTC
 from pathlib import Path
-from eredesscraper.utils import parse_readings_influx, flatten_config, flatten_keys, struct_config, parse_config, \
-    infer_type, map_month_matrix
+from unittest.mock import Mock, call
+from datetime import datetime
+from eredesscraper.utils import *
 
 
 def test_parse_readings_influx():
@@ -62,6 +63,77 @@ def test_map_month_matrix():
     date = datetime(2022, 10, 1)
     assert map_month_matrix(date) == (4, 1)
 
+
+def test_map_year_steps():
+    from datetime import datetime
+
+    # Test with current year
+    current_year = datetime.now().year
+    assert map_year_steps(datetime(current_year, 1, 1)) == 0
+
+    # Test with previous year
+    previous_year = current_year - 1
+    assert map_year_steps(datetime(previous_year, 1, 1)) == 1
+
+    # Test with future year
+    future_year = current_year + 1
+    assert map_year_steps(datetime(future_year, 1, 1)) == -1
+
+
+def test_file2blob():
+    file_path = Path(__file__).parent / 'example.xlsx'
+    blob = file2blob(file_path)
+    assert isinstance(blob, bytes)
+    assert len(blob) > 0
+    # Add more assertions if needed
+
+
+def test_pw_nav_year_back():
+    # Create a mock Page object
+    mock_page = Mock()
+
+    test_date = datetime(2020, 1, 1)
+
+    # Set the return value of get_by_text and is_visible methods
+    mock_page.get_by_text.return_value.is_visible.return_value = False
+
+    # Call the function with the mock Page object and a datetime object
+    pw_nav_year_back(test_date, mock_page)
+
+    # Assert that the click method was called once
+    assert mock_page.get_by_role.call_count == 1
+    assert mock_page.get_by_role.call_args == call("button", name="Ano anterior (Control + left)")
+
+    # Reset the mock Page object
+    mock_page.reset_mock()
+
+    # Set the return value of get_by_text and is_visible methods
+    mock_page.get_by_text.return_value.is_visible.return_value = True
+
+    # Call the function with the mock Page object and a datetime object
+    pw_nav_year_back(test_date, mock_page)
+
+    # Assert that the click method was not called
+    assert mock_page.get_by_role.call_count == 0
+
+
+def db_conn(db_path):
+    assert db_conn(db_path) is True
+
+
+def test_get_screen_resolution():
+    # Call the function
+    resolution = get_screen_resolution()
+
+    # Check the type of the returned value
+    assert isinstance(resolution, tuple)
+
+    # Check the length of the returned tuple
+    assert len(resolution) == 2
+
+    # Check that the values are positive integers
+    assert isinstance(resolution[0], int) and resolution[0] > 0
+    assert isinstance(resolution[1], int) and resolution[1] > 0
 
 if __name__ == '__main__':
     pytest.main()

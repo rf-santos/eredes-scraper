@@ -1,6 +1,6 @@
 from pathlib import Path
 import duckdb
-import importlib.resources
+from importlib.resources import files
 from eredesscraper.models import TaskstatusRecord, WorkflowRequestRecord
 
 db_path = Path.home() / ".ers" / "ers.db"
@@ -43,8 +43,7 @@ class DuckDB:
         self.db_path = db_path
         self.conn = duckdb.connect(db_path)
 
-        self.init_script = importlib.resources.read_text("eredesscraper",
-                                                         "ddb_init.sql")
+        self.init_script = files("eredesscraper").joinpath("ddb_init.sql").read_text()
 
         self.conn.execute(self.init_script)
 

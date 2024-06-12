@@ -336,7 +336,7 @@ def file2blob(file_path: Path) -> bytes:
         return f.read()
 
 
-def test_db_conn(db_path: str) -> bool:
+def db_conn(db_path: str) -> bool:
     """
     Test the database connection.
     """
@@ -362,11 +362,11 @@ def pw_nav_year_back(date: datetime, pw_page: Page, call_counter: int = 0) -> No
     if call_counter > max_steps_back:
         raise ValueError("Year not found in records")
 
-    for _ in range(max_steps_back):
-        if not pw_page.get_by_text(f"{date.year}", exact=True).is_visible():
-            pw_page.get_by_role("button", name="Ano anterior (Control + left)").click()
-            call_counter += 1
-            pw_page = pw_nav_year_back(date, pw_page, call_counter)
+    while not pw_page.get_by_text(f"{date.year}", exact=True).is_visible():
+        if call_counter >= max_steps_back:
+            raise ValueError("Year not found in records")
+        pw_page.get_by_role("button", name="Ano anterior (Control + left)").click()
+        call_counter += 1
 
         return pw_page
     

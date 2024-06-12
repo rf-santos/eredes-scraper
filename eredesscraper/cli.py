@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Optional
+import warnings
 
 import typer
 import yaml
@@ -22,6 +23,9 @@ app = typer.Typer(name="ers",
                   epilog="For more information, please visit https://github.com/rf-santos/eredes-scraper",
                   pretty_exceptions_show_locals=False,
                   context_settings={"allow_extra_args": True})
+
+# supress warnings
+warnings.filterwarnings("ignore", category=UserWarning)
 
 
 @app.callback()
@@ -213,6 +217,9 @@ def server(
         storage: Optional[str] = typer.Option(db_path.parent.absolute().as_posix(), "--storage", "-S",
                                               help="Specify the storage path to persist the API state")):
     """Start the application webserver"""
+
+    if not debug:
+        warnings.filterwarnings("ignore", category=UserWarning)
 
     try:
         Path.mkdir(Path(storage), parents=True, exist_ok=True)
