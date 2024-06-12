@@ -1,8 +1,7 @@
-import pytest
-from pytz import UTC
-from pathlib import Path
 from unittest.mock import Mock, call
-from datetime import datetime
+
+import pytest
+
 from eredesscraper.utils import *
 
 
@@ -134,6 +133,7 @@ def test_get_screen_resolution():
     # Check that the values are positive integers
     assert isinstance(resolution[0], int) and resolution[0] > 0
     assert isinstance(resolution[1], int) and resolution[1] > 0
+
 
 if __name__ == '__main__':
     pytest.main()

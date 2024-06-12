@@ -1,7 +1,7 @@
-from os.path import dirname, isdir, join
 import os
 import re
 import subprocess
+from os.path import dirname, isdir, join
 from pathlib import Path
 
 version_re = re.compile('^Version: (.+)$', re.M)

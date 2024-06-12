@@ -1,17 +1,16 @@
 import datetime
 import re
 from pathlib import Path
-import sys
-from time import sleep
 from random import randint
 from uuid import uuid4
+
 import typer
-from rich.progress import Progress, SpinnerColumn, TextColumn
 from playwright.sync_api import sync_playwright
 from playwright_stealth import stealth_sync
+from rich.progress import Progress, SpinnerColumn, TextColumn
 
-from eredesscraper.utils import get_screen_resolution, map_month_matrix_names, pw_nav_year_back
 from eredesscraper.meta import user_agent_list
+from eredesscraper.utils import get_screen_resolution, map_month_matrix_names, pw_nav_year_back
 
 ENTRYPOINT = "https://balcaodigital.e-redes.pt/consumptions/history"
 
@@ -135,13 +134,14 @@ class EredesScraper:
 
                 if captcha.is_visible():
                     print("🔐 Captcha detected. Try again later")
-                    raise ScraperFlowError("🔐 Captcha detected. A screenshot was saved in the current directory for debugging purposes"
-                                           "\nPlease try again later.")
+                    raise ScraperFlowError(
+                        "🔐 Captcha detected. A screenshot was saved in the current directory for debugging purposes"
+                        "\nPlease try again later.")
             except ScraperFlowError:
                 self.page.screenshot(path=f"{Path.cwd()}/ers_captcha_error.png")
-                raise ScraperFlowError("🔐 Captcha detected. A screenshot was saved in the current directory for debugging purposes"
-                                       "\nPlease try again later.")
-                    
+                raise ScraperFlowError(
+                    "🔐 Captcha detected. A screenshot was saved in the current directory for debugging purposes"
+                    "\nPlease try again later.")
 
             progress.remove_task(t1)
             t2 = progress.add_task(description=" 💡 Finding your CPE...", total=None)
@@ -157,7 +157,7 @@ class EredesScraper:
             except ScraperFlowError:
                 self.page.screenshot(path=f"{Path.cwd()}/ers_cpe_error.png")
                 raise ScraperFlowError("💥 Failed to find the CPE code. A screenshot was "
-                                    "saved in the current directory for debugging purposes")
+                                       "saved in the current directory for debugging purposes")
 
             progress.remove_task(t2)
             t3 = progress.add_task(description=" 📊 Downloading your data...", total=None)
@@ -179,20 +179,20 @@ class EredesScraper:
 
                     target_year = self.page.get_by_text(f"{date.year}", exact=True)
 
-                    is_disabled = bool(target_year.get_attribute("aria-disabled"))               
+                    is_disabled = bool(target_year.get_attribute("aria-disabled"))
 
                     if is_disabled:
                         raise ScraperFlowError("There is no available data for the selected year")
                     else:
                         target_year.click()
-                
+
                 if self.page.get_by_role("gridcell", name=f"{month_str}").is_disabled():
                     self.page.screenshot(path=f"{Path.cwd()}/ers_month_error.png")
                     raise ScraperFlowError("Selected month is not available. A screenshot was saved in the current "
                                            "directory for debugging purposes")
 
                 self.page.get_by_role("gridcell", name=f"{month_str}").click()
-            
+
             try:
                 with self.page.expect_event("download") as download_info:
 
@@ -202,7 +202,7 @@ class EredesScraper:
                     download = download_info.value
 
                 download.save_as(f"{self.tmp}/{year}_{month}_{self.session_id.__str__().split('-')[0]}_readings.xlsx")
-            
+
             except ScraperFlowError:
                 self.page.screenshot(path=f"{Path.cwd()}/ers_download_error.png")
                 raise ScraperFlowError("Failed to find the 'Exportar excel' element")
@@ -216,8 +216,7 @@ class EredesScraper:
             typer.echo(f"📁\tDownloaded file: {self.dwnl_file}")
 
         return self.dwnl_file
-    
-    
+
     def run(self, month, year):
         ua = user_agent_list[randint(0, len(user_agent_list) - 1)]
         # get system screen resolution

@@ -1,6 +1,8 @@
-from pathlib import Path
-import duckdb
 from importlib.resources import files
+from pathlib import Path
+
+import duckdb
+
 from eredesscraper.models import TaskstatusRecord, WorkflowRequestRecord
 
 db_path = Path.home() / ".ers" / "ers.db"
@@ -47,7 +49,8 @@ class DuckDB:
 
         self.conn.execute(self.init_script)
 
-        wf = self.conn.execute("SELECT * FROM information_schema.tables WHERE table_name = 'workflowrequests'").fetchone()
+        wf = self.conn.execute(
+            "SELECT * FROM information_schema.tables WHERE table_name = 'workflowrequests'").fetchone()
         ts = self.conn.execute("SELECT * FROM information_schema.tables WHERE table_name = 'taskstatus'").fetchone()
 
         assert wf is not None, "Database initialization failed"
@@ -63,19 +66,19 @@ class DuckDB:
         self.conn.close()
 
     def query(self, query: str, values: list = None):
-            """
-            Executes the given SQL query on the database connection.
+        """
+        Executes the given SQL query on the database connection.
 
-            Args:
-                query (str): The SQL query to execute.
-                values (list, optional): The values to be used in the query (if any). Defaults to None.
+        Args:
+            query (str): The SQL query to execute.
+            values (list, optional): The values to be used in the query (if any). Defaults to None.
 
-            Returns:
-                result: The result of the query execution.
-            """
-            result = self.conn.execute(query, values) if values else self.conn.execute(query)
+        Returns:
+            result: The result of the query execution.
+        """
+        result = self.conn.execute(query, values) if values else self.conn.execute(query)
 
-            return result
+        return result
 
     def insert(self, table: str, data: dict):
         """
@@ -163,27 +166,27 @@ class DuckDB:
         self.update("taskstatus", set_clause, where_clause, values)
 
         return True
-    
+
     def get_taskstatus(self, task_id: str):
-            """
-            Retrieves the task status from the database based on the given task ID.
+        """
+        Retrieves the task status from the database based on the given task ID.
 
-            Args:
-                task_id (str): The ID of the task.
+        Args:
+            task_id (str): The ID of the task.
 
-            Returns:
-                result: The task status retrieved from the database.
-            """
-            result = self.query(f"SELECT * FROM taskstatus WHERE task_id = ?", [task_id])
-            return result
-    
+        Returns:
+            result: The task status retrieved from the database.
+        """
+        result = self.query(f"SELECT * FROM taskstatus WHERE task_id = ?", [task_id])
+        return result
+
     def destroy(self):
-            """
-            Closes the connection and deletes the database file.
+        """
+        Closes the connection and deletes the database file.
 
-            Returns:
-                bool: True if the operation is successful, False otherwise.
-            """
-            self.conn.close()
-            db_path.unlink(missing_ok=True)
-            return True
+        Returns:
+            bool: True if the operation is successful, False otherwise.
+        """
+        self.conn.close()
+        db_path.unlink(missing_ok=True)
+        return True

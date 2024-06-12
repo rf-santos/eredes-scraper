@@ -1,8 +1,8 @@
 # package imports
-from pathlib import Path
-from datetime import datetime, timedelta
-from uuid import uuid4
 import os
+from datetime import datetime
+from pathlib import Path
+from uuid import uuid4
 
 import typer
 
@@ -124,15 +124,15 @@ def switchboard(name: str, db: list, config_path: Path, month: int = date.month,
         typer.echo(f"📇\tE-REDES client info: "
                    f"NIF: {typer.style(config['eredes']['nif'], fg=typer.colors.GREEN, bold=True)}, "
                    f"CPE: {typer.style(config['eredes']['cpe'], fg=typer.colors.GREEN, bold=True)}")
-        
+
     bot = EredesScraper(
-                nif=config['eredes']['nif'],
-                password=config['eredes']['pwd'],
-                cpe_code=config['eredes']['cpe'],
-                quiet=quiet,
-                headless=headless,
-                uuid=uuid
-            )
+        nif=config['eredes']['nif'],
+        password=config['eredes']['pwd'],
+        cpe_code=config['eredes']['cpe'],
+        quiet=quiet,
+        headless=headless,
+        uuid=uuid
+    )
 
     match name:
         case 'current':

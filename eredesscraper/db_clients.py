@@ -1,6 +1,5 @@
 import datetime
 from pathlib import Path
-from pytz import UTC
 
 import influxdb_client
 import pandas as pd
@@ -8,6 +7,7 @@ import typer
 from influxdb_client import WritePrecision
 from influxdb_client.client.exceptions import InfluxDBError
 from influxdb_client.client.write_api import SYNCHRONOUS
+from pytz import UTC
 
 from eredesscraper.utils import parse_readings_influx
 

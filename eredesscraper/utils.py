@@ -2,20 +2,19 @@ import locale
 import math
 import os
 import time
-from playwright.sync_api import Page
-from pytz import UTC
 from collections.abc import MutableMapping
 from datetime import datetime
 from pathlib import Path
 from typing import Union
-from pykwalify.core import Core
-from screeninfo import get_monitors
 
 import pandas as pd
 import yaml
+from playwright.sync_api import Page
+from pykwalify.core import Core
+from pytz import UTC
 
-from eredesscraper.meta import en_pt_month_map
 from eredesscraper.backend import DuckDB
+from eredesscraper.meta import en_pt_month_map
 
 config_schema_path = Path(__file__).parent.parent / "schemas" / "config_schema.yml"
 
@@ -306,7 +305,7 @@ def map_month_matrix_names(date: datetime) -> str:
         locale.setlocale(locale.LC_TIME, 'pt_PT.UTF-8')
     except locale.Error:
         return en_pt_month_map[str(date.month)]
-        
+
     return date.strftime("%b").lower() + "."
 
 
@@ -369,8 +368,10 @@ def pw_nav_year_back(date: datetime, pw_page: Page, call_counter: int = 0) -> No
         call_counter += 1
 
         return pw_page
-    
+
+
 from screeninfo import get_monitors
+
 
 def get_screen_resolution():
     """

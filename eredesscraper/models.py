@@ -1,8 +1,9 @@
-from pydantic import BaseModel
+from datetime import datetime
 from typing import Optional
 from uuid import UUID
-from datetime import datetime
+
 from fastapi import Query
+from pydantic import BaseModel
 
 from eredesscraper.meta import supported_workflows, supported_databases
 

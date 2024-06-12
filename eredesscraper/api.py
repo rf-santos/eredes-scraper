@@ -1,23 +1,23 @@
 import io
+import json
+from datetime import datetime
 from pathlib import Path
+from uuid import uuid4
 
 import requests
 import yaml
-import json
 from fastapi import BackgroundTasks, FastAPI, HTTPException, UploadFile, File, Depends
-from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.openapi.utils import get_openapi
-from uuid import uuid4
+from fastapi.responses import FileResponse, StreamingResponse
 from typer import get_app_dir
-from datetime import datetime
 
 from eredesscraper._version import get_version
+from eredesscraper.backend import DuckDB
 from eredesscraper.meta import supported_workflows, supported_databases
-from eredesscraper.utils import parse_config, flatten_config, struct_config, infer_type, file2blob
-from eredesscraper.workflows import switchboard
 from eredesscraper.models import WorkflowRequestRecord, TaskstatusRecord, RunWorkflowRequest, ConfigSetRequest, \
     ConfigLoadRequest, Config
-from eredesscraper.backend import DuckDB, db_path
+from eredesscraper.utils import parse_config, flatten_config, struct_config, infer_type, file2blob
+from eredesscraper.workflows import switchboard
 
 appdir = get_app_dir(app_name="ers")
 config_path = Path(appdir) / "cache" / "config.yml"
@@ -38,13 +38,12 @@ def get_db():
 
 def run_workflow_task(task_id: uuid4, config_path: Path, name: str, db: list, month: int, year: int, delta: bool,
                       keep: bool, ddb: DuckDB = None):
-    
     ts = TaskstatusRecord(task_id=task_id,
                           status="running",
                           file=None,
                           created=None,
                           updated=datetime.now())
-    
+
     ddb.update_taskstatus(ts)
 
     try:
@@ -63,16 +62,17 @@ def run_workflow_task(task_id: uuid4, config_path: Path, name: str, db: list, mo
 
         ts.status = "completed"
         ts.file = file2blob(result.source_data) if result.source_data else None
-        ts.updated=datetime.now()
+        ts.updated = datetime.now()
 
         ddb.update_taskstatus(ts)
 
     except Exception as e:
-        
+
         ts.status = f"failed: {str(e)}"
-        ts.updated=datetime.now()
+        ts.updated = datetime.now()
 
         ddb.update_taskstatus(ts)
+
 
 @app.get("/version", summary="Show the current version")
 def get_version_api():
@@ -162,7 +162,7 @@ def run_workflow_async(background_tasks: BackgroundTasks, request: RunWorkflowRe
                                year=request.year,
                                delta=request.delta,
                                download=request.download)
-    
+
     ddb.insert_workflow_request(wf)
 
     ts = TaskstatusRecord(task_id=task_id,
@@ -170,7 +170,7 @@ def run_workflow_async(background_tasks: BackgroundTasks, request: RunWorkflowRe
                           file=None,
                           created=datetime.now(),
                           updated=None)
-    
+
     ddb.insert_taskstatus(ts)
 
     try:
@@ -202,12 +202,11 @@ def run_workflow_async(background_tasks: BackgroundTasks, request: RunWorkflowRe
 
 @app.get("/status/{task_id}", summary="Get the status of a task")
 def get_status(task_id: str, ddb=Depends(get_db)):
-    
-    record = ddb.get_taskstatus(task_id).fetchone()    
+    record = ddb.get_taskstatus(task_id).fetchone()
 
     if record is None:
         raise HTTPException(status_code=404, detail="Task not found")
-    
+
     ts = TaskstatusRecord(task_id=record[0],
                           status=record[1],
                           file="File found. Download file with the `download` API method" if record[2] else None,
@@ -216,23 +215,24 @@ def get_status(task_id: str, ddb=Depends(get_db)):
 
     return dict(ts.model_dump())
 
+
 @app.get("/download/{task_id}", summary="Get the file extracted from async run")
 def get_file(task_id: str, ddb=Depends(get_db)):
-    
     record = ddb.get_taskstatus(task_id).fetchone()
 
     if record is None:
         raise HTTPException(status_code=404, detail="Task not found")
-    
+
     ts = TaskstatusRecord(task_id=record[0],
-                            status=record[1],
-                            file=record[2],
-                            created=record[3],
-                            updated=record[4])
+                          status=record[1],
+                          file=record[2],
+                          created=record[3],
+                          updated=record[4])
     filename = f"{ts.created.strftime('%Y-%m-%d')}_{ts.task_id.hex.split('-')[0]}_readings.xlsx"
-    
-    return StreamingResponse(io.BytesIO(ts.file), media_type="application/octet-stream", headers={"Content-Disposition": f"attachment; filename={filename}"})
-    
+
+    return StreamingResponse(io.BytesIO(ts.file), media_type="application/octet-stream",
+                             headers={"Content-Disposition": f"attachment; filename={filename}"})
+
 
 @app.post("/config/load", summary="Loads a YAML string as a config file into the program")
 def load_config(request: ConfigLoadRequest):

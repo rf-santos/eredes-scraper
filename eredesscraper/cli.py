@@ -1,16 +1,16 @@
+import warnings
 from pathlib import Path
 from typing import Optional
-import warnings
 
 import typer
 import yaml
 
+from eredesscraper._version import get_version
+from eredesscraper.backend import db_path
+from eredesscraper.meta import cli_header, supported_workflows, supported_databases
+from eredesscraper.server import start_api_server
 from eredesscraper.utils import parse_config, validate_config, flatten_config, struct_config, infer_type
 from eredesscraper.workflows import switchboard
-from eredesscraper.meta import cli_header, supported_workflows, supported_databases
-from eredesscraper._version import get_version
-from eredesscraper.server import start_api_server
-from eredesscraper.backend import db_path
 
 appdir = typer.get_app_dir(app_name="ers")
 config_path = Path(appdir) / "cache" / "config.yml"
