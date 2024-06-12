@@ -35,7 +35,7 @@ jobs:
         virtualenvs-create: false
 
     - name: Install dev dependencies
-      run: poetry install --group dev
+      run: poetry install --with dev
 
     - name: Run pytest
       uses: pavelzw/pytest-action@v2
