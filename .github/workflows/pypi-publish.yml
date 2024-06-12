@@ -8,6 +8,10 @@ on:
     tags:
     - '*'
 
+  pull_request:
+    branches:
+      - main
+
 jobs:
   build-publish-release:
     name: Build distribution 📦
@@ -30,6 +34,16 @@ jobs:
         uses: snok/install-poetry@v1.3.3
         with:
           virtualenvs-create: false
+
+      - name: Run pytest
+        uses: pavelzw/pytest-action@v2
+        with:
+          verbose: true
+          emoji: true
+          job-summary: true
+          custom-arguments: '-q'
+          click-to-expand: true
+          report-title: 'Pytest Report'
 
       - name: Build package
         run: |
