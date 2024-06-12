@@ -13,4 +13,4 @@ def db_path(request):
 
 @pytest.fixture(scope='session')
 def config_path():
-    return Path(__file__).parent / 'config.yml'
+    return Path(Path(__file__).parent.parent / 'config.yml').resolve()

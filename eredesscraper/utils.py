@@ -6,6 +6,7 @@ from collections.abc import MutableMapping
 from datetime import datetime
 from pathlib import Path
 from typing import Union
+from importlib.resources import files
 
 import pandas as pd
 import yaml
@@ -16,7 +17,8 @@ from pytz import UTC
 from eredesscraper.backend import DuckDB
 from eredesscraper.meta import en_pt_month_map
 
-config_schema_path = Path(__file__).parent.parent / "schemas" / "config_schema.yml"
+config_schema = files("eredesscraper").joinpath("config_schema.yml")
+config_schema_path = Path(str(config_schema)).resolve()
 
 
 def parse_readings_influx(file_path: Path, cpe_code: str) -> pd.DataFrame:
@@ -141,8 +143,8 @@ def validate_config(config_path: Path, schema_path: Path = config_schema_path) -
     The schema file is a YAML file that follows the JSON Schema format.
     The schema file is located in the `schemas` folder of the package.
 
-    :param config: Specify the path to the YAML to be validated
-    :type config: pathlib.Path
+    :param config_path: Specify the path to the YAML to be validated
+    :type config_path: pathlib.Path
     :param schema_path: Specify the path to the schema file
     :type schema_path: pathlib.Path
     :return: A boolean value indicating whether the dictionary is valid against the schema

@@ -3,7 +3,7 @@
   "info": {
     "title": "E-REDES Scraper API",
     "description": "An API to interact with the E-REDES Scraper application",
-    "version": "0.1.1.post62.dev1",
+    "version": "0.1.1.post71.dev1",
     "x-logo": {
       "url": "https://raw.githubusercontent.com/rf-santos/eredes-scraper/master/static/logo.jpeg"
     }
@@ -189,7 +189,7 @@
     },
     "/config/load": {
       "post": {
-        "summary": "Loads a local config file into the program",
+        "summary": "Loads a YAML string as a config file into the program",
         "operationId": "load_config_config_load_post",
         "requestBody": {
           "content": {
@@ -377,7 +377,7 @@
           "config"
         ],
         "title": "ConfigLoadRequest",
-        "description": "A Pydantic model representing a request to load a configuration.\n\nAttributes:\n    config (str): The configuration to load."
+        "description": "A Pydantic model representing a request to load a configuration from a YAML string.\n\nAttributes:\n    config (str): The configuration in YAML format."
       },
       "ConfigSetRequest": {
         "properties": {

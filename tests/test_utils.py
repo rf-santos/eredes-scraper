@@ -36,8 +36,7 @@ def test_struct_config():
     assert struct_d == {'a': {'b': 1}, 'c': {'d': 2}}
 
 
-def test_parse_config():
-    config_path = Path(__file__).parent.parent / 'config.yml'
+def test_parse_config(config_path):
     config = parse_config(config_path)
     assert config is not None
     assert isinstance(config, dict)
@@ -116,7 +115,7 @@ def test_pw_nav_year_back():
     assert mock_page.get_by_role.call_count == 0
 
 
-def db_conn(db_path):
+def test_db_conn(db_path):
     assert db_conn(db_path) is True
 
 

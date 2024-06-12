@@ -3,6 +3,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 from uuid import uuid4
+from importlib.resources import files
 
 import requests
 import yaml
@@ -21,7 +22,8 @@ from eredesscraper.workflows import switchboard
 
 appdir = get_app_dir(app_name="ers")
 config_path = Path(appdir) / "cache" / "config.yml"
-openapi_url = Path(__file__).parent.parent / "schemas" / "openapi.json"
+openapi_spec = files("eredesscraper").joinpath("schemas", "openapi.json")
+openapi_url = Path(str(openapi_spec))
 
 app = FastAPI(
     title="E-REDES Scraper API",
