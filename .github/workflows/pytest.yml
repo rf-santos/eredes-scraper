@@ -38,12 +38,14 @@ jobs:
       run: poetry install --with dev
 
     - name: Run pytest
-      uses: pavelzw/pytest-action@v2
+      run: poetry run pytest --junit-xml=summary.xml
+
+    - name: Surface failing tests
+      if: always()
+      uses: pmeier/pytest-results-action@main
       with:
-        custom-pytest: 'poetry run pytest'
-        verbose: true
-        emoji: true
-        job-summary: true
-        custom-arguments: '-q'
-        click-to-expand: true
-        report-title: 'Pytest Report 🧪'
+        path: summary.xml
+        summary: true
+        display-options: fEX
+        fail-on-empty: true
+        title: Test results 🧪
