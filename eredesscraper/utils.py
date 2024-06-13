@@ -350,7 +350,7 @@ def db_conn(db_path: str) -> bool:
         return False
 
 
-def pw_nav_year_back(date: datetime, pw_page: Page, call_counter: int = 0) -> None:
+def pw_nav_year_back(date: datetime, pw_page: Page, call_counter: int = 0) -> Page:
     """
     Navigate back in the year selection popup table in the E-REDES website consumption history.
 
@@ -370,9 +370,6 @@ def pw_nav_year_back(date: datetime, pw_page: Page, call_counter: int = 0) -> No
         call_counter += 1
 
         return pw_page
-
-
-from screeninfo import get_monitors
 
 
 def get_screen_resolution():

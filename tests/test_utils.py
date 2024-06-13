@@ -120,7 +120,7 @@ def test_db_conn(db_path):
 
 
 def test_get_screen_resolution(mock_monitor):
-    with patch('screeninfo.get_monitors', return_value=mock_monitor):
+    with patch('eredesscraper.utils.get_monitors', return_value=mock_monitor):
         resolution = get_screen_resolution()
         assert resolution == (1920, 1080), "Expected resolution did not match"
 
