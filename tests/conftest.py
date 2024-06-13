@@ -20,4 +20,4 @@ def config_path():
 
 @pytest.fixture
 def mock_monitor():
-    return [Monitor(x=0, y=0, width=1920, height=1080, width_mm=509, height_mm=286, name='MockMonitor')]
+    return [Monitor(x=0, y=0, width=1920, height=1080, width_mm=509, height_mm=286, name='MockMonitor', is_primary=True)]

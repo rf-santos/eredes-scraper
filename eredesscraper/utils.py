@@ -10,6 +10,7 @@ from importlib.resources import files
 
 import pandas as pd
 import yaml
+import screeninfo
 from playwright.sync_api import Page
 from pykwalify.core import Core
 from pytz import UTC
@@ -379,5 +380,5 @@ def get_screen_resolution():
     Returns:
         tuple: A tuple containing the width and height of the screen resolution.
     """
-    monitor = get_monitors()[0]
+    monitor = screeninfo.get_monitors()[0]
     return monitor.width, monitor.height
