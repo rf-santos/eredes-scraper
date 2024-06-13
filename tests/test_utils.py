@@ -1,4 +1,4 @@
-from unittest.mock import Mock, call
+from unittest.mock import Mock, call, patch
 
 import pytest
 
@@ -119,19 +119,10 @@ def test_db_conn(db_path):
     assert db_conn(db_path) is True
 
 
-def test_get_screen_resolution():
-    # Call the function
-    resolution = get_screen_resolution()
-
-    # Check the type of the returned value
-    assert isinstance(resolution, tuple)
-
-    # Check the length of the returned tuple
-    assert len(resolution) == 2
-
-    # Check that the values are positive integers
-    assert isinstance(resolution[0], int) and resolution[0] > 0
-    assert isinstance(resolution[1], int) and resolution[1] > 0
+def test_get_screen_resolution(mock_monitor):
+    with patch('screeninfo.get_monitors', return_value=mock_monitor):
+        resolution = get_screen_resolution()
+        assert resolution == (1920, 1080), "Expected resolution did not match"
 
 
 if __name__ == '__main__':
