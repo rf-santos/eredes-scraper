@@ -1,7 +1,7 @@
-from os.path import dirname, isdir, join
 import os
 import re
 import subprocess
+from os.path import dirname, isdir, join
 from pathlib import Path
 
 version_re = re.compile('^Version: (.+)$', re.M)
@@ -44,7 +44,8 @@ def get_version():
             version = subprocess.check_output(cmd).decode().strip()
         except subprocess.CalledProcessError:
             print('Unable to get version number from git tags')
-            exit(1)
+            print('Setting version to 0.0.0')
+            version = '0.0.0'
 
         # PEP 386 compatibility
         if '-' in version:

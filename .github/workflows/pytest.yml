@@ -1,0 +1,49 @@
+name: Pytest Report 🧪
+
+on:
+  push:
+    branches:
+      - "master"
+      - "dev"
+  pull_request:
+    branches:
+      - "master"
+      - "dev"
+  workflow_dispatch:
+
+jobs:
+  pytest:
+    permissions:
+      contents: read
+    name: Pytest Report 🧪
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the repository to the GitHub Actions runner
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1.3.3
+      with:
+        virtualenvs-create: false
+
+    - name: Install dev dependencies
+      run: poetry install --with dev
+
+    - name: Run pytest
+      run: poetry run pytest --junit-xml=summary.xml
+
+    - name: Surface failing tests
+      if: always()
+      uses: pmeier/pytest-results-action@main
+      with:
+        path: summary.xml
+        summary: true
+        display-options: fEX
+        fail-on-empty: true
+        title: Test results 🧪

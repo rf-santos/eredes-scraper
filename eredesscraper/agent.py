@@ -1,19 +1,18 @@
 import datetime
-import os
-import time
+import re
 from pathlib import Path
+from random import randint
+from uuid import uuid4
 
 import typer
-from dateutil.relativedelta import relativedelta
+from playwright.sync_api import sync_playwright
+from playwright_stealth import stealth_sync
 from rich.progress import Progress, SpinnerColumn, TextColumn
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service as ChromeService
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait as wait
-from webdriver_manager.chrome import ChromeDriverManager
 
-from eredesscraper.utils import wait_for_download, save_screenshot, map_month_matrix, map_year_steps
+from eredesscraper.meta import user_agent_list
+from eredesscraper.utils import get_screen_resolution, map_month_matrix_names, pw_nav_year_back
+
+ENTRYPOINT = "https://balcaodigital.e-redes.pt/consumptions/history"
 
 
 class ScraperFlowError(Exception):
@@ -21,23 +20,26 @@ class ScraperFlowError(Exception):
 
 
 class EredesScraper:
-    def __init__(self, nif, password, cpe_code):
+    def __init__(self, nif, password, cpe_code, quiet: bool, headless: bool = True, uuid: uuid4 = uuid4()):
         self.dwnl_file = None
-        self.driver = None
-        self.chrome_options = webdriver.ChromeOptions()
-        self.headless = True
+        self.session_id = uuid
+        self.browser = None
+        self.context = None
+        self.page = None
+        self.headless = headless
         self.__nif = nif
         self.__password = password
         self.__cpe_code = cpe_code
-        self.__implicit_wait = 30
+        self.__implicit_wait = 90
+        self.__quiet = quiet
 
-        # Create a staging area for the ChromeDriver
+        # Create a staging area for the Playwright
         try:
-            Path.mkdir(Path.cwd() / 'tmp', exist_ok=True)
+            Path.mkdir(Path.cwd() / 'ers_tmp', exist_ok=True)
         except PermissionError:
             print("Permission denied to create a staging area for the Scraper")
 
-        self.tmp = Path(Path.cwd() / 'tmp').__str__()
+        self.tmp = Path(Path.cwd() / 'ers_tmp').__str__()
 
     @property
     def implicit_wait(self):
@@ -49,17 +51,6 @@ class EredesScraper:
             self.__implicit_wait = value
         else:
             raise TypeError("Expected an integer value")
-
-    @property
-    def headless(self):
-        return self.__headless
-
-    @headless.setter
-    def headless(self, value):
-        if isinstance(value, bool):
-            self.__headless = value
-        else:
-            raise TypeError("Expected a boolean value")
 
     @property
     def nif(self):
@@ -94,365 +85,151 @@ class EredesScraper:
         else:
             raise TypeError("Expected a string value")
 
-    def setup(self):
-        self.chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 '
-                                         '(KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36')
-
-        prefs = {
-            "download.default_directory": self.tmp,
-            "credentials_enable_service": False,
-            "profile.password_manager_enabled": False
-        }
-        self.chrome_options.add_experimental_option("prefs", prefs)
-        self.chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        self.chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])
-        self.chrome_options.add_experimental_option('useAutomationExtension', False)
-        if self.headless:
-            self.chrome_options.add_argument("--headless=new")
-            self.chrome_options.add_argument('--disable-blink-features=AutomationControlled')
-            self.chrome_options.add_argument('--disable-infobars')
-            self.chrome_options.add_argument('--disable-dev-shm-usage')
-            self.chrome_options.add_argument('--disable-browser-side-navigation')
-            self.chrome_options.add_argument('--disable-gpu')
-            self.chrome_options.add_argument('--disable-features=VizDisplayCompositor')
-            self.chrome_options.add_argument('--disable-extensions')
-            self.chrome_options.add_argument('--no-sandbox')
-            self.chrome_options.add_argument('--disable-notifications')
-            self.chrome_options.add_argument('--disable-crash-reporter')
-            self.chrome_options.add_argument('--disable-logging')
-            self.chrome_options.add_argument('--disable-sync')
-            self.chrome_options.add_argument("--window-size=1920,1080")
-
-        self.driver = webdriver.Chrome(
-            service=ChromeService(ChromeDriverManager().install()),
-            options=self.chrome_options
-        )
-
-        self.driver.implicitly_wait(30)
-
     def teardown(self):
-        self.driver.quit()
+        self.context.close()
+        self.browser.close()
 
-    def current(self):
+    def readings(self, month: int, year: int):
         with Progress(
                 SpinnerColumn(),
                 TextColumn("[progress.description]{task.description}"),
                 transient=True,
+                disable=self.__quiet
         ) as progress:
 
-            t1 = progress.add_task(description=" 🔐 Loging in...", total=None)
+            date = datetime.datetime(year, month, 1)
 
-            self.driver.get("https://balcaodigital.e-redes.pt/login")
-
-            wait(self.driver, 30).until(EC.presence_of_element_located(
-                (By.CSS_SELECTOR, ".ant-typography > .item > .highlights")
-            )).click()
-
-            self.driver.find_element(By.ID, "username").send_keys(f"{self.__nif}")
-
-            self.driver.find_element(By.ID, "labelPassword").send_keys(f"{self.__password}")
-
-            self.driver.find_element(By.XPATH, "//span[contains(.,'Entrar')]").click()
-            time.sleep(5)
-
-            text = None
-            try:
-                alert = self.driver.find_element(By.CSS_SELECTOR,
-                                                 "body > app-root > nz-layout > app-default > main > nz-content > div "
-                                                 "> div.login__text.ant-col > section.login-actions > app-sign-in > "
-                                                 "div > div > form > "
-                                                 "nz-form-item.ant-form-item.ant-row.ng-star-inserted > nz-alert > "
-                                                 "div > div > span")
-                text = alert.text
-            except Exception:
-                pass
-            finally:
-                if text is not None and "Dados inválidos" in text:
-                    save_screenshot(self.driver)
-                    raise ScraperFlowError(
-                        "🔐 Invalid Credentials!\nCheck your NIF and Password with `ers config show`.\n"
-                        "A screenshot was saved in the current directory for debugging purposes.")
-
-            wait(self.driver, 30).until(EC.presence_of_element_located(
-                (By.CSS_SELECTOR, ".card__myplaces .card-text")
-            )).click()
-
-            progress.remove_task(t1)
-            t2 = progress.add_task(description=" 💡 Finding your CPE...", total=None)
-
-            wait(self.driver, 30).until(EC.presence_of_element_located(
-                (By.CSS_SELECTOR, ".card:nth-child(3) .highlights")
-            )).click()
-
-            wait(self.driver, 30).until(EC.presence_of_element_located(
-                (By.CSS_SELECTOR, ".card:nth-child(1) > .item__title")
-            )).click()
-            try:
-                wait(self.driver, 30).until(EC.presence_of_element_located(
-                    (By.XPATH, f"//*[contains(text(),'{self.__cpe_code}')]")
-                )).click()
-            except ScraperFlowError:
-                save_screenshot(self.driver)
-                raise ScraperFlowError(
-                    "💥 Failed to find the CPE code. A screenshot was saved in the current directory for debugging "
-                    "purposes")
-
-            progress.remove_task(t2)
-            t3 = progress.add_task(description=" 📊 Downloading your data...", total=None)
-
-            time.sleep(30)
-            try:
-                element = self.driver.find_element(By.XPATH, "//strong[contains(text(), 'Exportar excel')]")
-            except ScraperFlowError:
-                save_screenshot(self.driver)
-                raise ScraperFlowError("Failed to find the 'Exportar excel' element")
-
-            self.driver.execute_script("arguments[0].scrollIntoView();", element)
-            element.click()
-
-            wait_for_download(self.tmp, 30)
-
-            current_date = datetime.datetime.now().strftime("%Y%m%d")
-            assert f"Consumos_{current_date}.xlsx" in os.listdir(self.tmp), "Download failed"
-
-            self.dwnl_file = Path(self.tmp) / f"Consumos_{current_date}.xlsx"
-
-        progress.remove_task(t3)
-        typer.echo(f"📁\tDownloaded file: {self.dwnl_file}")
-
-        return self.dwnl_file
-
-    def previous(self):
-        with Progress(
-                SpinnerColumn(),
-                TextColumn("[progress.description]{task.description}"),
-                transient=True,
-        ) as progress:
-
-            date = datetime.datetime.now()
-            prev_month = datetime.datetime.now() - relativedelta(months=1)
-            row, col = map_month_matrix(prev_month)
-
-            t1 = progress.add_task(description=" 🔐 Loging in...", total=None)
-
-            self.driver.get("https://balcaodigital.e-redes.pt/login")
-
-            wait(self.driver, 30).until(EC.presence_of_element_located(
-                (By.CSS_SELECTOR, ".ant-typography > .item > .highlights")
-            )).click()
-
-            self.driver.find_element(By.ID, "username").send_keys(f"{self.__nif}")
-
-            self.driver.find_element(By.ID, "labelPassword").send_keys(f"{self.__password}")
-
-            self.driver.find_element(By.XPATH, "//span[contains(.,'Entrar')]").click()
-            time.sleep(5)
-
-            text = None
-            try:
-                alert = self.driver.find_element(By.CSS_SELECTOR,
-                                                 "body > app-root > nz-layout > app-default > main > nz-content > div "
-                                                 "> div.login__text.ant-col > section.login-actions > app-sign-in > "
-                                                 "div > div > form > "
-                                                 "nz-form-item.ant-form-item.ant-row.ng-star-inserted > nz-alert > "
-                                                 "div > div > span")
-                text = alert.text
-            except Exception:
-                pass
-            finally:
-                if text is not None and "Dados inválidos" in text:
-                    save_screenshot(self.driver)
-                    raise ScraperFlowError(
-                        "🔐 Invalid Credentials!\nCheck your NIF and Password with `ers config show`.\nA screenshot "
-                        "was saved in the current directory for debugging purposes.")
-
-            wait(self.driver, 30).until(EC.presence_of_element_located(
-                (By.CSS_SELECTOR, ".card__myplaces .card-text")
-            )).click()
-
-            progress.remove_task(t1)
-            t2 = progress.add_task(description=" 💡 Finding your CPE...", total=None)
-
-            wait(self.driver, 30).until(EC.presence_of_element_located(
-                (By.CSS_SELECTOR, ".card:nth-child(3) .highlights")
-            )).click()
-
-            wait(self.driver, 30).until(EC.presence_of_element_located(
-                (By.CSS_SELECTOR, ".card:nth-child(1) > .item__title")
-            )).click()
-            try:
-                wait(self.driver, 30).until(EC.presence_of_element_located(
-                    (By.XPATH, f"//*[contains(text(),'{self.__cpe_code}')]")
-                )).click()
-            except ScraperFlowError:
-                save_screenshot(self.driver)
-                raise ScraperFlowError(
-                    "💥 Failed to find the CPE code. A screenshot was saved in the current directory for debugging "
-                    "purposes")
-
-            progress.remove_task(t2)
-            t3 = progress.add_task(description=" 📊 Downloading your data...", total=None)
-
-            time.sleep(20)
-            wait(self.driver, 30).until(EC.presence_of_element_located(
-                (By.XPATH, "//strong[contains(text(), 'Exportar excel')]")
-            ))
-
-            self.driver.find_element(By.CSS_SELECTOR, ".ng-tns-c92-28 > .ng-untouched").click()
-
-            if prev_month.year < date.year:
-                self.driver.find_element(By.XPATH, "//div[@id='cdk-overlay-4']/div/div/date-range-popup/div/div/div/inner-popup/div/div/month-header/div/button/span").click()
-
-            try:
-                wait(self.driver, 60).until(EC.presence_of_element_located(
-                    (By.XPATH, f"//div[@id='cdk-overlay-4']/div/div/date-range-popup/div/div/div"
-                                                   f"/inner-popup/div/div/div/month-table/table/tbody/tr[{row}]"
-                                                   f"/td[{col}]/div"))).click()
-            except ScraperFlowError:
-                save_screenshot(self.driver)
-                raise ScraperFlowError("Selected month is not available. A screenshot was saved in the current "
-                                       "directory for debugging purposes")
-
-            time.sleep(20)
-
-            try:
-                element = self.driver.find_element(By.XPATH, "//strong[contains(text(), 'Exportar excel')]")
-            except ScraperFlowError:
-                save_screenshot(self.driver)
-                raise ScraperFlowError("Failed to find the 'Exportar excel' element")
-
-            self.driver.execute_script("arguments[0].scrollIntoView();", element)
-            element.click()
-
-            wait_for_download(self.tmp, 30)
-
-            current_date = datetime.datetime.now().strftime("%Y%m%d")
-            assert f"Consumos_{current_date}.xlsx" in os.listdir(self.tmp), "Download failed"
-
-            self.dwnl_file = Path(self.tmp) / f"Consumos_{current_date}.xlsx"
-
-        progress.remove_task(t3)
-        typer.echo(f"📁\tDownloaded file: {self.dwnl_file}")
-
-        return self.dwnl_file
-
-    def select(self, month: int, year: int):
-        with Progress(
-                SpinnerColumn(),
-                TextColumn("[progress.description]{task.description}"),
-                transient=True,
-        ) as progress:
-
-            date = datetime.datetime(year, month, datetime.datetime.now().day)
+            current_date = datetime.datetime.now()
 
             assert date <= datetime.datetime.now(), "Selected date is in the future"
 
-            row, col = map_month_matrix(date)
-            back_steps = map_year_steps(date)
+            t1 = progress.add_task(description=" 🔐 Logging in...", total=None)
 
-            t1 = progress.add_task(description=" 🔐 Loging in...", total=None)
+            self.page.goto(ENTRYPOINT)
 
-            self.driver.get("https://balcaodigital.e-redes.pt/login")
+            self.page.get_by_text("Particular").click()
 
-            wait(self.driver, 30).until(EC.presence_of_element_located(
-                (By.CSS_SELECTOR, ".ant-typography > .item > .highlights")
-            )).click()
+            self.page.get_by_label("NIF").fill(f"{self.__nif}")
 
-            self.driver.find_element(By.ID, "username").send_keys(f"{self.__nif}")
+            self.page.get_by_label("Password").fill(f"{self.__password}")
 
-            self.driver.find_element(By.ID, "labelPassword").send_keys(f"{self.__password}")
+            self.page.get_by_role("button", name="Entrar").click()
+            # self.page.get_by_label("Password").press("Enter")
+            # self.page.get_by_text("Entrar").click()
 
-            self.driver.find_element(By.XPATH, "//span[contains(.,'Entrar')]").click()
-            time.sleep(5)
+            # try:
+            #     self.page.get_by_text("Leituras, contadores,").click()
+            #     # self.page.get_by_role("heading", name="Os meus locais").click()                
+            # except ScraperFlowError:
+            #     self.page.screenshot(path=f"{Path.cwd()}/ers_login_error.png")
+            #     with open(f"{Path.cwd()}/ers_login_error.html", "w") as f:
+            #         f.write(self.page.content())
+            #     if self.page.locator(has_text="Dados inválidos").is_visible():
+            #         raise ScraperFlowError("🔐 Invalid Credentials!\nCheck your NIF and "
+            #                                "Password with `ers config show`.\nA screenshot was saved in the current "
+            #                                "directory for debugging purposes.")
 
-            text = None
             try:
-                alert = self.driver.find_element(By.CSS_SELECTOR,
-                                                 "body > app-root > nz-layout > app-default > main > nz-content > div "
-                                                 "> div.login__text.ant-col > section.login-actions > app-sign-in > "
-                                                 "div > div > form > "
-                                                 "nz-form-item.ant-form-item.ant-row.ng-star-inserted > nz-alert > "
-                                                 "div > div > span")
-                text = alert.text
-            except Exception:
-                pass
-            finally:
-                if text is not None and "Dados inválidos" in text:
-                    save_screenshot(self.driver)
-                    raise ScraperFlowError(
-                        "🔐 Invalid Credentials!\nCheck your NIF and Password with `ers config show`.\nA screenshot "
-                        "was saved in the current directory for debugging purposes.")
+                captcha = self.page.locator("h1").filter(has_text="Validação de Segurança")
 
-            wait(self.driver, 30).until(EC.presence_of_element_located(
-                (By.CSS_SELECTOR, ".card__myplaces .card-text")
-            )).click()
+                if captcha.is_visible():
+                    print("🔐 Captcha detected. Try again later")
+                    raise ScraperFlowError(
+                        "🔐 Captcha detected. A screenshot was saved in the current directory for debugging purposes"
+                        "\nPlease try again later.")
+            except ScraperFlowError:
+                self.page.screenshot(path=f"{Path.cwd()}/ers_captcha_error.png")
+                raise ScraperFlowError(
+                    "🔐 Captcha detected. A screenshot was saved in the current directory for debugging purposes"
+                    "\nPlease try again later.")
 
             progress.remove_task(t1)
             t2 = progress.add_task(description=" 💡 Finding your CPE...", total=None)
 
-            wait(self.driver, 30).until(EC.presence_of_element_located(
-                (By.CSS_SELECTOR, ".card:nth-child(3) .highlights")
-            )).click()
+            # self.page.get_by_text("Produção, consumos e potências").click()
 
-            wait(self.driver, 30).until(EC.presence_of_element_located(
-                (By.CSS_SELECTOR, ".card:nth-child(1) > .item__title")
-            )).click()
+            # self.page.get_by_text("Consultar histórico").click()
+
+            # self.page.locator("p").filter(has_text=re.compile(self.__cpe_code)).click()
+
             try:
-                wait(self.driver, 30).until(EC.presence_of_element_located(
-                    (By.XPATH, f"//*[contains(text(),'{self.__cpe_code}')]")
-                )).click()
+                self.page.locator("p").filter(has_text=re.compile(r"^" + self.__cpe_code + "$")).click(timeout=120000)
             except ScraperFlowError:
-                save_screenshot(self.driver)
-                raise ScraperFlowError(
-                    "💥 Failed to find the CPE code. A screenshot was saved in the current directory for debugging "
-                    "purposes")
+                self.page.screenshot(path=f"{Path.cwd()}/ers_cpe_error.png")
+                raise ScraperFlowError("💥 Failed to find the CPE code. A screenshot was "
+                                       "saved in the current directory for debugging purposes")
 
             progress.remove_task(t2)
             t3 = progress.add_task(description=" 📊 Downloading your data...", total=None)
 
-            time.sleep(20)
-            wait(self.driver, 30).until(EC.presence_of_element_located(
-                (By.XPATH, "//strong[contains(text(), 'Exportar excel')]")
-            ))
+            if date.strftime("%Y-%m") != current_date.strftime("%Y-%m"):
 
-            self.driver.find_element(By.CSS_SELECTOR, ".ng-tns-c92-28 > .ng-untouched").click()
+                month_str = map_month_matrix_names(date)
 
-            time.sleep(15)
+                self.page.get_by_role("textbox", name="Select month").click()
 
-            if back_steps > 0:
-                for _ in range(back_steps):
-                    self.driver.find_element(By.CSS_SELECTOR, ".ant-picker-super-prev-icon").click()
-                    time.sleep(5)
+                if date.year != current_date.now().year:
+
+                    self.page.get_by_role("button", name=f"{current_date.year}").click()
+
+                    target_year = self.page.get_by_text(f"{date.year}", exact=True)
+
+                    if not target_year.is_visible():
+                        self.page = pw_nav_year_back(date=date, pw_page=self.page)
+
+                    target_year = self.page.get_by_text(f"{date.year}", exact=True)
+
+                    is_disabled = bool(target_year.get_attribute("aria-disabled"))
+
+                    if is_disabled:
+                        raise ScraperFlowError("There is no available data for the selected year")
+                    else:
+                        target_year.click()
+
+                if self.page.get_by_role("gridcell", name=f"{month_str}").is_disabled():
+                    self.page.screenshot(path=f"{Path.cwd()}/ers_month_error.png")
+                    raise ScraperFlowError("Selected month is not available. A screenshot was saved in the current "
+                                           "directory for debugging purposes")
+
+                self.page.get_by_role("gridcell", name=f"{month_str}").click()
 
             try:
-                wait(self.driver, 60).until(EC.presence_of_element_located(
-                    (By.XPATH, f"//div[@id='cdk-overlay-4']/div/div/date-range-popup/div/div/div"
-                                                   f"/inner-popup/div/div/div/month-table/table/tbody/tr[{row}]"
-                                                   f"/td[{col}]/div"))).click()
-            except ScraperFlowError:
-                save_screenshot(self.driver)
-                raise ScraperFlowError("Selected month is not available. A screenshot was saved in the current "
-                                       "directory for debugging purposes")
+                with self.page.expect_event("download") as download_info:
 
-            time.sleep(20)
+                    # self.page.get_by_text("Exportar excel").click()
+                    self.page.locator("a").filter(has_text="Exportar excel").click()
 
-            try:
-                element = self.driver.find_element(By.XPATH, "//strong[contains(text(), 'Exportar excel')]")
+                    download = download_info.value
+
+                download.save_as(f"{self.tmp}/{year}_{month}_{self.session_id.__str__().split('-')[0]}_readings.xlsx")
+
             except ScraperFlowError:
-                save_screenshot(self.driver)
+                self.page.screenshot(path=f"{Path.cwd()}/ers_download_error.png")
                 raise ScraperFlowError("Failed to find the 'Exportar excel' element")
 
-            self.driver.execute_script("arguments[0].scrollIntoView();", element)
-            element.click()
+            self.dwnl_file = Path(self.tmp) / f"{year}_{month}_{self.session_id.__str__().split('-')[0]}_readings.xlsx"
 
-            wait_for_download(self.tmp, 30)
-
-            current_date = datetime.datetime.now().strftime("%Y%m%d")
-            assert f"Consumos_{current_date}.xlsx" in os.listdir(self.tmp), "Download failed"
-
-            self.dwnl_file = Path(self.tmp) / f"Consumos_{current_date}.xlsx"
+            assert self.dwnl_file.exists(), "Failed to download the file"
 
         progress.remove_task(t3)
-        typer.echo(f"📁\tDownloaded file: {self.dwnl_file}")
+        if not self.__quiet:
+            typer.echo(f"📁\tDownloaded file: {self.dwnl_file}")
 
         return self.dwnl_file
+
+    def run(self, month, year):
+        ua = user_agent_list[randint(0, len(user_agent_list) - 1)]
+        # get system screen resolution
+
+        with sync_playwright() as p:
+            self.browser = p.webkit.launch(headless=self.headless, downloads_path=self.tmp)
+            self.context = self.browser.new_context(
+                # user_agent=ua,
+                viewport={"width": get_screen_resolution()[0], "height": get_screen_resolution()[1]},
+                screen={"width": get_screen_resolution()[0], "height": get_screen_resolution()[1]}
+            )
+            self.context.set_default_timeout(self.__implicit_wait * 1000)
+            self.page = self.context.new_page()
+            stealth_sync(self.page)
+            self.readings(month, year)
+            self.teardown()

@@ -1,7 +1,7 @@
 eredes:
   # eredes credentials
-  nif: <my-eredes-nif>
-  pwd: <my-eredes-password>
+  nif: 123456789
+  pwd: myAwesomePassword
   # CPE to monitor. e.g. PT00############04TW (where # is a digit). CPE can be found in your bill details
   cpe: PT00############04TW
 

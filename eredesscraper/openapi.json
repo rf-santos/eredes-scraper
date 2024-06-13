@@ -1,0 +1,525 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "E-REDES Scraper API",
+    "description": "An API to interact with the E-REDES Scraper application",
+    "version": "0.1.1.post71.dev1",
+    "x-logo": {
+      "url": "https://raw.githubusercontent.com/rf-santos/eredes-scraper/master/static/logo.jpeg"
+    }
+  },
+  "paths": {
+    "/version": {
+      "get": {
+        "summary": "Show the current version",
+        "operationId": "get_version_api_version_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/info": {
+      "get": {
+        "summary": "Get information about the available workflows and databases",
+        "operationId": "get_info_info_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/run": {
+      "post": {
+        "summary": "Run the scraper workflow",
+        "operationId": "run_workflow_run_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunWorkflowRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/run_async": {
+      "post": {
+        "summary": "Run the scraper workflow asynchronously",
+        "operationId": "run_workflow_async_run_async_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunWorkflowRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/status/{task_id}": {
+      "get": {
+        "summary": "Get the status of a task",
+        "operationId": "get_status_status__task_id__get",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/download/{task_id}": {
+      "get": {
+        "summary": "Get the file extracted from async run",
+        "operationId": "get_file_download__task_id__get",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/config/load": {
+      "post": {
+        "summary": "Loads a YAML string as a config file into the program",
+        "operationId": "load_config_config_load_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfigLoadRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/config/remote": {
+      "post": {
+        "summary": "Loads a remote config file from a URL into the program",
+        "operationId": "load_config_from_url_config_remote_post",
+        "parameters": [
+          {
+            "name": "url",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Url"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/config/upload": {
+      "post": {
+        "summary": "Uploads a config file into the program",
+        "operationId": "upload_config_config_upload_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_config_config_upload_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/config/show": {
+      "get": {
+        "summary": "Show the current configuration",
+        "operationId": "show_config_config_show_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/config/set": {
+      "post": {
+        "summary": "Set a configuration value",
+        "operationId": "set_config_config_set_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfigSetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Body_upload_config_config_upload_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_config_config_upload_post"
+      },
+      "ConfigLoadRequest": {
+        "properties": {
+          "config": {
+            "type": "string",
+            "title": "Config"
+          }
+        },
+        "type": "object",
+        "required": [
+          "config"
+        ],
+        "title": "ConfigLoadRequest",
+        "description": "A Pydantic model representing a request to load a configuration from a YAML string.\n\nAttributes:\n    config (str): The configuration in YAML format."
+      },
+      "ConfigSetRequest": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "value": {
+            "type": "string",
+            "title": "Value"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "value"
+        ],
+        "title": "ConfigSetRequest",
+        "description": "A Pydantic model representing a request to set a configuration.\n\nAttributes:\n    key (str): The key of the configuration to set.\n    value (str): The value to set for the configuration."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "RunWorkflowRequest": {
+        "properties": {
+          "workflow": {
+            "type": "string",
+            "title": "Workflow",
+            "description": "Specify one of the supported workflows: ['current', 'previous', 'select']",
+            "default": "current"
+          },
+          "db": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Db",
+            "description": "Specify one of the supported databases: ['influxdb']"
+          },
+          "month": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Month",
+            "description": "Specify the month to load (1-12). [Required for `select` workflow]"
+          },
+          "year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year",
+            "description": "Specify the year to load (YYYY). [Required for `select` workflow]"
+          },
+          "delta": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delta",
+            "description": "Load only the most recent data points",
+            "default": false
+          },
+          "download": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Download",
+            "description": "If set, keeps the source data file after loading",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "RunWorkflowRequest",
+        "description": "A Pydantic model representing a request to run a workflow.\n\nAttributes:\n    workflow (str): The workflow to run. Default is \"current\".\n    db (list, optional): The databases to use. Default is None.\n    month (int, optional): The month to load. Required for `select` workflow. Default is None.\n    year (int, optional): The year to load. Required for `select` workflow. Default is None.\n    delta (bool, optional): If True, load only the most recent data points. Default is False.\n    download (bool, optional): If True, keeps the source data file after loading. Default is False."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

@@ -1,20 +1,30 @@
+import locale
+import math
 import os
 import time
-from pytz import UTC
 from collections.abc import MutableMapping
 from datetime import datetime
 from pathlib import Path
-from selenium import webdriver
 from typing import Union
+from importlib.resources import files
 
 import pandas as pd
 import yaml
-from selenium.webdriver.common.by import By
+import screeninfo
+from playwright.sync_api import Page
+from pykwalify.core import Core
+from pytz import UTC
+
+from eredesscraper.backend import DuckDB
+from eredesscraper.meta import en_pt_month_map
+
+config_schema = files("eredesscraper").joinpath("config_schema.yml")
+config_schema_path = Path(str(config_schema)).resolve()
 
 
-def parse_monthly_consumptions(file_path: Path, cpe_code: str) -> pd.DataFrame:
+def parse_readings_influx(file_path: Path, cpe_code: str) -> pd.DataFrame:
     """
-    The `parse_monthly_consumptions` function takes a XLSX file path retrieved from E-REDES and returns
+    The `parse_readings_influx` function takes a XLSX file path retrieved from E-REDES and returns
     a pandas DataFrame with the parsed data.
     An example for the retrieved file can be found in the `tests` folder.
     TZ is set to Europe/Lisbon
@@ -128,6 +138,29 @@ def struct_config(d: dict, sep: str = ".") -> dict:
     return items
 
 
+def validate_config(config_path: Path, schema_path: Path = config_schema_path) -> bool:
+    """
+    The validate_config function takes a YAML file and validates it against a schema file.
+    The schema file is a YAML file that follows the JSON Schema format.
+    The schema file is located in the `schemas` folder of the package.
+
+    :param config_path: Specify the path to the YAML to be validated
+    :type config_path: pathlib.Path
+    :param schema_path: Specify the path to the schema file
+    :type schema_path: pathlib.Path
+    :return: A boolean value indicating whether the dictionary is valid against the schema
+    :doc-author: Ricardo Filipe dos Santos
+    """
+    assert config_path.is_file(), f"Invalid file: {config_path}"
+    assert schema_path.is_file(), f"Invalid file: {schema_path}"
+    assert config_path.suffix == ".yml", f"Invalid file extension: {config_path.suffix}"
+    assert schema_path.suffix == ".yml", f"Invalid file extension: {schema_path.suffix}"
+    assert schema_path.exists(), f"Invalid file: {schema_path}"
+
+    c = Core(source_file=config_path.__str__(), schema_files=[schema_path.__str__()])
+    return c.validate()
+
+
 def parse_config(config_path: Path = Path.cwd() / "config.yml") -> dict:
     """
     Parses a YAML configuration file and returns its contents as a dictionary.
@@ -138,37 +171,40 @@ def parse_config(config_path: Path = Path.cwd() / "config.yml") -> dict:
     Returns:
         dict: The contents of the YAML configuration file as a dictionary.
     """
+    validate_config(config_path)
+
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
 
     return config
 
 
-def save_screenshot(driver: webdriver, path: str = '.', name: str = 'screenshot') -> None:
-    """
-    Saves a screenshot of the current webpage displayed in the given WebDriver instance.
+# Legacy function to create screenshot with Selenium WebDriver
+# def save_screenshot(driver: webdriver, path: str = '.', name: str = 'screenshot') -> None:
+#     """
+#     Saves a screenshot of the current webpage displayed in the given WebDriver instance.
 
-    Args:
-        driver (selenium.WebDriver): The WebDriver instance to use for taking the screenshot.
-        path (str, optional): The file path to save the screenshot to. Defaults to 'screenshot.png'.
-    """
-    try:
-        path = Path(path).resolve()
-        assert path.is_dir(), f"Invalid directory: {path}"
-        path.mkdir(parents=True, exist_ok=True)
-    except PermissionError:
-        print("Permission denied to create a directory for the screenshot")
+#     Args:
+#         driver (selenium.WebDriver): The WebDriver instance to use for taking the screenshot.
+#         path (str, optional): The file path to save the screenshot to. Defaults to 'screenshot.png'.
+#     """
+#     try:
+#         path = Path(path).resolve()
+#         assert path.is_dir(), f"Invalid directory: {path}"
+#         path.mkdir(parents=True, exist_ok=True)
+#     except PermissionError:
+#         print("Permission denied to create a directory for the screenshot")
 
-    name = name.replace(' ', '_') + '.png'
+#     name = name.replace(' ', '_') + '.png'
 
-    path = path / name
+#     path = path / name
 
-    original_size = driver.get_window_size()
-    required_width = driver.execute_script('return document.body.parentNode.scrollWidth')
-    required_height = driver.execute_script('return document.body.parentNode.scrollHeight')
-    driver.set_window_size(required_width, required_height)
-    driver.find_element(By.TAG_NAME, "body").screenshot(path.__str__())
-    driver.set_window_size(original_size['width'], original_size['height'])
+#     original_size = driver.get_window_size()
+#     required_width = driver.execute_script('return document.body.parentNode.scrollWidth')
+#     required_height = driver.execute_script('return document.body.parentNode.scrollHeight')
+#     driver.set_window_size(required_width, required_height)
+#     driver.find_element(By.TAG_NAME, "body").screenshot(path.__str__())
+#     driver.set_window_size(original_size['width'], original_size['height'])
 
 
 def wait_for_download(directory, timeout, nfiles=None):
@@ -258,6 +294,24 @@ def map_month_matrix(date: datetime) -> tuple:
     return row, column
 
 
+def map_month_matrix_names(date: datetime) -> str:
+    """
+    The map_month_matrix_names function takes a datetime object and returns the month name.
+    This maps to the month selection popup table in the E-REDES website consumption history.
+
+    Args:
+        date (datetime.datetime): Specify the month to be mapped
+    Returns:
+        str: The month name
+    """
+    try:
+        locale.setlocale(locale.LC_TIME, 'pt_PT.UTF-8')
+    except locale.Error:
+        return en_pt_month_map[str(date.month)]
+
+    return date.strftime("%b").lower() + "."
+
+
 def map_year_steps(date: datetime) -> int:
     """
     The map_year_steps function takes a datetime object and returns the number of steps to reach the desired year.
@@ -269,3 +323,62 @@ def map_year_steps(date: datetime) -> int:
         int: The number of steps to reach the desired year
     """
     return datetime.now().year - date.year
+
+
+def file2blob(file_path: Path) -> bytes:
+    """
+    The file2blob function takes a file path and returns the file as a blob.
+
+    Args:
+        file_path (pathlib.Path): The path to the file to be converted
+    Returns:
+        bytes: The file as a blob
+    """
+    with open(file_path, "rb") as f:
+        return f.read()
+
+
+def db_conn(db_path: str) -> bool:
+    """
+    Test the database connection.
+    """
+    try:
+        db = DuckDB(db_path)
+        db.query("SELECT 1")
+        db.__del__()
+        return True
+    except ConnectionError:
+        return False
+
+
+def pw_nav_year_back(date: datetime, pw_page: Page, call_counter: int = 0) -> Page:
+    """
+    Navigate back in the year selection popup table in the E-REDES website consumption history.
+
+    Args:
+        date (datetime.datetime): The target date of the data to be retrieved
+        pw_page (playwright.sync_api.Page): The Playwright page object
+    """
+    max_steps_back = math.ceil((datetime.now().year - date.year) / 12)
+
+    if call_counter > max_steps_back:
+        raise ValueError("Year not found in records")
+
+    while not pw_page.get_by_text(f"{date.year}", exact=True).is_visible():
+        if call_counter >= max_steps_back:
+            raise ValueError("Year not found in records")
+        pw_page.get_by_role("button", name="Ano anterior (Control + left)").click()
+        call_counter += 1
+
+        return pw_page
+
+
+def get_screen_resolution():
+    """
+    Returns the screen resolution of the primary monitor.
+
+    Returns:
+        tuple: A tuple containing the width and height of the screen resolution.
+    """
+    monitor = screeninfo.get_monitors()[0]
+    return monitor.width, monitor.height

@@ -1,0 +1,24 @@
+type: map
+mapping:
+  eredes:
+    type: map
+    mapping:
+      nif:
+        type: int
+      pwd:
+        type: str
+      cpe:
+        type: str
+  influxdb:
+    type: map
+    mapping:
+      host:
+        type: str
+      port:
+        type: int
+      bucket:
+        type: str
+      org:
+        type: str
+      token:
+        type: str

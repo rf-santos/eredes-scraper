@@ -1,7 +1,0 @@
-*.ipynb
-.idea
-dist/
-docs
-poetry.lock
-.devcontainer/devcontainer.json
-.gitignore
