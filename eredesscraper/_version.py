@@ -44,7 +44,8 @@ def get_version():
             version = subprocess.check_output(cmd).decode().strip()
         except subprocess.CalledProcessError:
             print('Unable to get version number from git tags')
-            exit(1)
+            print('Setting version to 0.0.0')
+            version = '0.0.0'
 
         # PEP 386 compatibility
         if '-' in version:
