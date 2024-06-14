@@ -380,5 +380,11 @@ def get_screen_resolution():
     Returns:
         tuple: A tuple containing the width and height of the screen resolution.
     """
-    monitor = screeninfo.get_monitors()[0]
-    return monitor.width, monitor.height
+    try:
+        monitors = screeninfo.get_monitors()
+        if monitors:
+            return monitors[0].width, monitors[0].height
+        else:
+            return 1920, 1080
+    except Exception as e:
+        return 1920, 1080
