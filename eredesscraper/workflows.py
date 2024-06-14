@@ -9,73 +9,14 @@ import typer
 from eredesscraper.agent import EredesScraper
 from eredesscraper.db_clients import InfluxDB
 from eredesscraper.utils import parse_config
+from eredesscraper.models import ERSSession
 
 user_config_path = Path().home() / ".ers"
 Path.mkdir(user_config_path, exist_ok=True)
 
 date = datetime.now()
 
-
-class ERSSession():
-    def __init__(self, session_id: str, workflow: str, databases: list, source_data: Path | None, status: str,
-                 timestamp: datetime):
-        self.session_id = session_id
-        self.workflow = workflow
-        self.databases = databases
-        self.source_data = source_data
-        self.staging_area = source_data.parent if source_data else None
-        self.status = status
-        self.timestamp = timestamp
-        self.task_id = None
-
-    def set_task_id(self, task_id: str):
-        self.task_id = task_id
-
-    def get_task_id(self):
-        return self.task_id
-
-    def __str__(self):
-        return f"Session ID: {self.session_id}\nWorkflow: {self.workflow}\nDatabases: {self.databases}\nSource Data: {self.source_data}\nStaging Area: {self.staging_area}\nStatus: {self.status}\nTimestamp: {self.timestamp}\n"
-
-    def __repr__(self):
-        return f"ERSSession(session_id={self.session_id}, workflow={self.workflow}, databases={self.databases}, source_data={self.source_data}, staging_area={self.staging_area}, status={self.status}, timestamp={self.timestamp})"
-
-    def __eq__(self, other):
-        if not isinstance(other, ERSSession):
-            return NotImplemented
-        return self.session_id == other.session_id and self.workflow == other.workflow and self.databases == other.databases and self.source_data == other.source_data and self.staging_area == other.staging_area and self.status == other.status and self.timestamp == other.timestamp
-
-    def __ne__(self, other):
-        if not isinstance(other, ERSSession):
-            return NotImplemented
-        return self.session_id != other.session_id or self.workflow != other.workflow or self.databases != other.databases or self.source_data != other.source_data or self.staging_area != other.staging_area or self.status != other.status or self.timestamp != other.timestamp
-
-    def __lt__(self, other):
-        if not isinstance(other, ERSSession):
-            return NotImplemented
-        return self.timestamp < other.timestamp
-
-    def __le__(self, other):
-        if not isinstance(other, ERSSession):
-            return NotImplemented
-        return self.timestamp <= other.timestamp
-
-    def __gt__(self, other):
-        if not isinstance(other, ERSSession):
-            return NotImplemented
-        return self.timestamp > other.timestamp
-
-    def __ge__(self, other):
-        if not isinstance(other, ERSSession):
-            return NotImplemented
-        return self.timestamp >= other.timestamp
-
-    def __hash__(self):
-        return hash((self.session_id, self.workflow, self.databases, self.source_data, self.staging_area, self.status,
-                     self.timestamp))
-
-
-def switchboard(name: str, db: list, config_path: Path, month: int = date.month, year: int = date.year,
+def switchboard(config_path: Path, name: str, db: None | list = None, month: int = date.month, year: int = date.year,
                 delta: bool = False, keep: bool = False, quiet: bool = False, output: Path = Path.home() / ".ers",
                 uuid: uuid4 = uuid4(), headless: bool = True) -> ERSSession:
     """
@@ -106,6 +47,8 @@ def switchboard(name: str, db: list, config_path: Path, month: int = date.month,
     """
 
     date = datetime.now()
+
+    output = Path(output) if output else Path.home() / ".ers"
 
     if name not in ['current', 'previous', 'select']:
         if not quiet:
@@ -163,6 +106,8 @@ def switchboard(name: str, db: list, config_path: Path, month: int = date.month,
                 client.load(source_data=bot.dwnl_file, cpe_code=config['eredes']['cpe'], delta=delta)
                 if not quiet:
                     typer.echo(f"📈\tLoaded data from {bot.dwnl_file} into the InfluxDB database")
+            case None:
+                pass
 
             case '':
                 pass

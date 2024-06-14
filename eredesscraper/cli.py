@@ -102,7 +102,8 @@ def run(workflow: str = typer.Option("current",
         delta=delta,
         keep=keep,
         headless=headless,
-        quiet=ctx.obj["quiet"]
+        quiet=ctx.obj["quiet"],
+        output=output
     )
 
     if not ctx.obj["quiet"]:
@@ -211,9 +212,9 @@ def server(
         host: Optional[str] = typer.Option("localhost", "--host", "-H",
                                            help="Specify the host to run the webserver on"),
         reload: Optional[bool] = typer.Option(False, "--reload", "-r",
-                                              help="Enable auto-reload"),
+                                              help="[⚠ Breaks workflow. Only for debugging] Enable auto-reload"),
         debug: Optional[bool] = typer.Option(False, "--debug", "-d",
-                                             help="Enable debug mode"),
+                                             help="[⚠ Only for debugging] Enable debug mode"),
         storage: Optional[str] = typer.Option(db_path.parent.absolute().as_posix(), "--storage", "-S",
                                               help="Specify the storage path to persist the API state")):
     """Start the application webserver"""
