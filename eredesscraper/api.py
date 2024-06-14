@@ -16,13 +16,13 @@ from eredesscraper._version import get_version
 from eredesscraper.backend import DuckDB
 from eredesscraper.meta import supported_workflows, supported_databases
 from eredesscraper.models import WorkflowRequestRecord, TaskstatusRecord, RunWorkflowRequest, ConfigSetRequest, \
-    ConfigLoadRequest, Config
+    ConfigLoadRequest, Config, WorkflowAsyncResponse, WorkflowResponse
 from eredesscraper.utils import parse_config, flatten_config, struct_config, infer_type, file2blob
 from eredesscraper.workflows import switchboard
 
 appdir = get_app_dir(app_name="ers")
 config_path = Path(appdir) / "cache" / "config.yml"
-openapi_spec = files("eredesscraper").joinpath("schemas", "openapi.json")
+openapi_spec = files("eredesscraper").joinpath("openapi.json")
 openapi_url = Path(str(openapi_spec))
 
 app = FastAPI(
@@ -87,7 +87,7 @@ def get_info():
 
 
 @app.post("/run", summary="Run the scraper workflow")
-def run_workflow(request: RunWorkflowRequest, ddb=Depends(get_db)):
+def run_workflow(request: RunWorkflowRequest, ddb=Depends(get_db), response_model=WorkflowResponse):
     if not config_path.exists():
         raise HTTPException(status_code=404, detail="Config file not found. Please load it first.")
 
@@ -147,11 +147,19 @@ def run_workflow(request: RunWorkflowRequest, ddb=Depends(get_db)):
         return FileResponse(result.source_data, media_type="application/octet-stream",
                             filename=result.source_data.name)
     else:
-        return dict(result.__dict__)
+        return response_model(
+            task_id=task_id,
+            workflow=request.workflow,
+            databases=request.db,
+            source_data=result.source_data,
+            staging_area=result.staging_area,
+            status=ts.status,
+            timestamp=datetime.now(),
+        )
 
 
 @app.post("/run_async", summary="Run the scraper workflow asynchronously")
-def run_workflow_async(background_tasks: BackgroundTasks, request: RunWorkflowRequest, ddb=Depends(get_db)):
+def run_workflow_async(background_tasks: BackgroundTasks, request: RunWorkflowRequest, ddb=Depends(get_db), response_model=WorkflowAsyncResponse):
     if not config_path.exists():
         raise HTTPException(status_code=404, detail="Config file not found. Please load it first.")
 
@@ -189,7 +197,7 @@ def run_workflow_async(background_tasks: BackgroundTasks, request: RunWorkflowRe
             ddb=ddb
         )
 
-        return {"task_id": task_id, "status": ts.status, "detail": "Workflow queued successfully"}
+        return response_model(**{"task_id": task_id, "status": ts.status, "detail": "Workflow queued successfully"})
 
 
     except Exception as e:
@@ -202,7 +210,7 @@ def run_workflow_async(background_tasks: BackgroundTasks, request: RunWorkflowRe
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/status/{task_id}", summary="Get the status of a task")
+@app.get("/status/{task_id}", summary="Get the status of a task", response_model=TaskstatusRecord)
 def get_status(task_id: str, ddb=Depends(get_db)):
     record = ddb.get_taskstatus(task_id).fetchone()
 
@@ -341,7 +349,7 @@ def custom_openapi():
         routes=app.routes,
     )
     openapi_schema["info"]["x-logo"] = {
-        "url": "https://raw.githubusercontent.com/rf-santos/eredes-scraper/master/static/logo.jpeg"
+        "url": "https://raw.githubusercontent.com/rf-santos/eredes-scraper/master/static/logo_small.jpeg"
     }
     app.openapi_schema = openapi_schema
     return app.openapi_schema
