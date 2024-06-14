@@ -5,7 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.9] - 2023-01-20
+## [1.0.0] - 2024-06-13
+
+### 💥 Breaking issues
+  - Selenium-based web scraper replaced by non-Selenium scraper.
+  - Implemented an API (FastAPI): Run `ers server [OPTIONS]` to use it.
+  - The API uses DuckDB to persist usage data.
+  - The `select` workflow requires a `year` and `month` argument.
+  - Removed docker support (issues bypassing bot detection)
+
+### 👍 Improvements
+  - EredesScraper class now uses playwright instead of selenium for browser automation.
+  - Function `parse_monthly_consumptions` renamed to `parse_readings_influx`.
+  - Method delta migrated from db_clients.InfluxDB class to main application workflow.
+  - Added new utility functions.
+
+### ⚙ Minor updates:
+  - Updated dependencies.
+  - Code clean up, refactor, and improvements.
+  - New tests added.
+  - Removed unused or unnecessary codes.
+
+### 🐞 Fixes:
+  - Several bug fixes and error handling improved.
+
+## [0.1.9] - 2024-01-20
 
 ### 💥 Breaking issues
 - A website update broke the workflows that targeted previous months. The issue was fixed 🥳

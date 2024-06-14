@@ -1,15 +1,15 @@
 # E-REDES Scraper
 ## Description
 This is a web scraper that collects data from the E-REDES website and can upload it to a database.
-Since there is no exposed interface to the data, this web scraper was developed as approach to collect it programatically.
+Since there is no exposed programatic interface to the data, this web scraper was developed as approach to collect it.
 A high-level of the process is:
 1. The scraper collects the data from the E-REDES website.
 2. A file with the energy consumption readings is downloaded.
 3. [ Optional ] The file is parsed and the data is uploaded to the selected database. 
 4. [ Optional ] A feature supporting only the insertion of "deltas" is available.
 
-> This package supports E-REDES website available at time of writing 23/10/2023. 
-> The entrypoint for the scraper is the page https://balcaodigital.e-redes.pt/login.
+> This package supports E-REDES website available at time of writing 14/06/2023. 
+> The entrypoint for the scraper is the page https://balcaodigital.e-redes.pt/consumptions/history.
 
 ## Installation
 The package can be installed using pip:
@@ -56,18 +56,59 @@ ers run -w previous -d influxdb --delta
 
 # get readings from May 2023
 ers run -w select -d influxdb -m 5 -y 2023
+
+# start an API server
+ers server -H "localhost" -p 8778 --reload -S <path/to/database>
 ```
 
-### Docker:
-```bash
-# get readings from May
+### API:
 
-# docker args
-docker run --rm -v config.yml:/config.yml \
-  # latest `ers` image
-  ghcr.io/rf-santos/eredesscraper:latest \
-  # calling `ers` 
-  ers run -w current -d influxdb
+For more details refer to the OpenAPI documentation or the UI endpoints available at `http://<host>:<port>/docs` and `http://<host>:<port>/redoc`
+
+```bash
+# main methods:
+
+# load an ers configuration 
+# different options to load available:
+# - directly in the request body,
+# - download remote file,
+# - upload local file
+curl -X 'POST' \
+  'http://localhost:8778/config/upload' \
+  -H 'Content-Type: multipart/form-data' \
+  -F 'file=@my-config.yml'
+
+
+# run sync workflow
+curl -X 'POST' \
+  'http://localhost:8778/run' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "workflow": "current"
+}'
+
+# run async workflow
+curl -X 'POST' \
+  'http://localhost:8778/run_async' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "workflow": "select",
+  "db": [
+    "influxdb"
+  ],
+  "month": 5,
+  "year": 2023,
+  "delta": true,
+  "download": true
+}'
+
+# get task status (`task_id` returned in /run_async response body)
+curl -X 'GET' \
+  'http://localhost:8778/status/<task_id>'
+
+# download the file retrieved by the workflow
+curl -X 'GET' \
+  'http://localhost:8778/download/<task_id>'
 ```
 
 ### Python:
@@ -77,15 +118,16 @@ from eredesscraper.workflows import switchboard
 from pathlib import Path
 
 # get deltas from current month readings
-switchboard(name="current",
-            db="influxdb",
-            config_path=Path("./config.yml"),
-            delta=True)
+switchboard(config_path=Path("./config.yml"),
+            name="current",
+            db=list("influxdb"),
+            delta=True,
+            keep=True)
 
 # get readings from May 2023
-switchboard(name="select",
-            db="influxdb",
-            config_path=Path("./config.yml"),
+switchboard(config_path=Path("./config.yml"),
+            name="select",
+            db=list("influxdb"),
             month=5,
             year=2023)
 ```
@@ -103,11 +145,12 @@ switchboard(name="select",
 - [X] ~~Add workflow for retrieving previous month data.~~
 - [X] ~~Add workflow for retrieving data form an arbitrary month.~~
 - [X] ~~Build CLI~~.
-- [ ] Containerize app.
+- [X] ~~Build API~~
+- [ ] ~~Containerize app~~.
 - [ ] Documentation.
 - [X] ~~Add CI/CD~~.
 - [ ] Add logging.
-- [ ] Add tests.
+- [X] ~~Add tests~~ (limited coverage).
 - [ ] Add runtime support for multiple CPEs.
 
 ## Contributing
