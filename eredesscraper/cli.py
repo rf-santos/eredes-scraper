@@ -29,10 +29,13 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 
 @app.callback()
-def main(ctx: typer.Context, quiet: bool = typer.Option(False, "--quiet", "-q", help="Run in non-interactive mode")):
+def main(ctx: typer.Context,
+         quiet: bool = typer.Option(False, "--quiet", "-q", help="Run in non-interactive mode"),
+         debug: bool = typer.Option(False, "--debug", "-b", help="Run in debug mode")):
     """Main entry point for the CLI."""
     ctx.ensure_object(dict)
     ctx.obj["quiet"] = quiet
+    ctx.obj["debug"] = debug
 
 
 @app.command(help="Show the current version")
@@ -103,7 +106,8 @@ def run(workflow: str = typer.Option("current",
         keep=keep,
         headless=headless,
         quiet=ctx.obj["quiet"],
-        output=output
+        output=Path(output).resolve(),
+        debug=ctx.obj["debug"] if ctx.obj["debug"] else False
     )
 
     if not ctx.obj["quiet"]:

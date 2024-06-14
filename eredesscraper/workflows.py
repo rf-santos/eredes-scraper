@@ -8,17 +8,19 @@ import typer
 
 from eredesscraper.agent import EredesScraper
 from eredesscraper.db_clients import InfluxDB
-from eredesscraper.utils import parse_config
+from eredesscraper.utils import parse_config, flatten_config
 from eredesscraper.models import ERSSession
+from eredesscraper.logger import logger
 
 user_config_path = Path().home() / ".ers"
 Path.mkdir(user_config_path, exist_ok=True)
 
 date = datetime.now()
 
+
 def switchboard(config_path: Path, name: str, db: None | list = None, month: int = date.month, year: int = date.year,
                 delta: bool = False, keep: bool = False, quiet: bool = False, output: Path = Path.home() / ".ers",
-                uuid: uuid4 = uuid4(), headless: bool = True) -> ERSSession:
+                uuid: uuid4 = uuid4(), headless: bool = True, debug: bool = False) -> ERSSession:
     """
     The run function is the entry point.
 
@@ -44,11 +46,14 @@ def switchboard(config_path: Path, name: str, db: None | list = None, month: int
     :type uuid: uuid4
     :return: ERSSession: The result object of the workflow run.
     :doc-author: Ricardo Filipe dos Santos
+
+    Args:
+        headless:
     """
 
     date = datetime.now()
 
-    output = Path(output) if output else Path.home() / ".ers"
+    output = output if output else Path.home() / ".ers"
 
     if name not in ['current', 'previous', 'select']:
         if not quiet:
@@ -68,13 +73,28 @@ def switchboard(config_path: Path, name: str, db: None | list = None, month: int
                    f"NIF: {typer.style(config['eredes']['nif'], fg=typer.colors.GREEN, bold=True)}, "
                    f"CPE: {typer.style(config['eredes']['cpe'], fg=typer.colors.GREEN, bold=True)}")
 
+    logger.info(f"------ NEW ERS SESSION ------")
+    logger.info(f"Session ID: {uuid}")
+    logger.info(f"Running the {name} workflow")
+    logger.info(f"Retrieving data for the month of {month} and year {year}")
+    logger.info(f"Database connections: {db}")
+    logger.info(f"Running in quiet mode: {quiet}")
+    logger.info(f"Output directory: {output}")
+    logger.info(f"Configuration:")
+    for key, value in flatten_config(config).items():
+        if 'pwd' in key or 'token' in key:
+            logger.info(f"{key}: {'*' * len(value)}")
+        else:
+            logger.info(f"{key}: {value}")
+
     bot = EredesScraper(
         nif=config['eredes']['nif'],
         password=config['eredes']['pwd'],
         cpe_code=config['eredes']['cpe'],
         quiet=quiet,
         headless=headless,
-        uuid=uuid
+        uuid=uuid,
+        debug=debug
     )
 
     match name:

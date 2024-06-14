@@ -10,7 +10,8 @@ from playwright_stealth import stealth_sync
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
 from eredesscraper.meta import user_agent_list
-from eredesscraper.utils import get_screen_resolution, map_month_matrix_names, pw_nav_year_back
+from eredesscraper.utils import get_screen_resolution, map_month_matrix_names, pw_nav_year_back, get_geolocation
+from eredesscraper.logger import logger
 
 ENTRYPOINT = "https://balcaodigital.e-redes.pt/consumptions/history"
 
@@ -20,13 +21,15 @@ class ScraperFlowError(Exception):
 
 
 class EredesScraper:
-    def __init__(self, nif, password, cpe_code, quiet: bool, headless: bool = True, uuid: uuid4 = uuid4()):
+    def __init__(self, nif, password, cpe_code, quiet: bool, headless: bool = True, uuid: uuid4 = uuid4(),
+                 debug: bool = False):
         self.dwnl_file = None
         self.session_id = uuid
         self.browser = None
         self.context = None
         self.page = None
         self.headless = headless
+        self.debug = debug
         self.__nif = nif
         self.__password = password
         self.__cpe_code = cpe_code
@@ -219,7 +222,6 @@ class EredesScraper:
 
     def run(self, month, year):
         ua = user_agent_list[randint(0, len(user_agent_list) - 1)]
-        # get system screen resolution
 
         with sync_playwright() as p:
             self.browser = p.webkit.launch(headless=self.headless, downloads_path=self.tmp)
@@ -230,6 +232,12 @@ class EredesScraper:
             )
             self.context.set_default_timeout(self.__implicit_wait * 1000)
             self.page = self.context.new_page()
+            self.page.on("request", lambda request: logger.debug(f">> Method: {request.method}; URL: {request.url}; "
+                                                                 f"Headers: {request.all_headers()}"))
+            self.page.on("response", lambda response: logger.debug(f"<< {response.status} {response.url}"))
+            if self.debug:
+                self.page.on("request", lambda request: print(f">> Method: {request.method}; URL: {request.url}"))
+                self.page.on("request", lambda request: print(f">> Headers: {request.allHeaders()}"))
             stealth_sync(self.page)
             self.readings(month, year)
             self.teardown()

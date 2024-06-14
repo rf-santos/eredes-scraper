@@ -11,6 +11,7 @@ from importlib.resources import files
 import pandas as pd
 import yaml
 import screeninfo
+import requests
 from playwright.sync_api import Page
 from pykwalify.core import Core
 from pytz import UTC
@@ -388,3 +389,8 @@ def get_screen_resolution():
             return 1920, 1080
     except Exception as e:
         return 1920, 1080
+
+def get_geolocation():
+    response = requests.get('http://ip-api.com/json/')
+    geodata = response.json()
+    return geodata['lat'], geodata['lon']
