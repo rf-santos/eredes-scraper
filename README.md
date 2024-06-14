@@ -141,6 +141,18 @@ switchboard(config_path=Path("./config.yml"),
 ### Available databases:
 - `influxdb`: Loads the data in an InfluxDB database. (https://docs.influxdata.com/influxdb/v2/get-started/)
 
+## Troubleshooting
+Since this is a web scraper, it is subject to changes in the E-REDES website.
+The scraper might stop working due to changes in the website structure, blocking mechanisms, etc...
+
+### Tips:
+- Check if the playwright browser is being blocked by the website. Usually, CAPTCHA mechanisms are the cause of this.
+  - Try to run the scraper with the `-H` flag. This will open a browser window and you can see what is happening.
+  - Try using `xvfb-run` to run the scraper. (ex: `xvfb-run ers run -w current -d influxdb`)
+- Check the logs for any errors or hints on what might be causing the issue. (by default in the `~/.ers` folder).
+  - Running the CLI with the `--debug` flag will debug info to the terminal.
+- Check if you are running the API with the `-r/--reload` flag. This is known to break the application.
+
 ## Roadmap
 - [X] ~~Add workflow for retrieving previous month data.~~
 - [X] ~~Add workflow for retrieving data form an arbitrary month.~~
