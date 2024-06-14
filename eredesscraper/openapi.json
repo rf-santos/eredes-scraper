@@ -3,7 +3,7 @@
   "info": {
     "title": "E-REDES Scraper API",
     "description": "An API to interact with the E-REDES Scraper application",
-    "version": "0.1.1.post96.dev1",
+    "version": "0.1.1.post99.dev1",
     "x-logo": {
       "url": "https://raw.githubusercontent.com/rf-santos/eredes-scraper/master/static/logo_small.jpeg"
     }
@@ -153,7 +153,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/TaskstatusRecord"
+                }
               }
             }
           },
@@ -508,6 +510,65 @@
         "type": "object",
         "title": "RunWorkflowRequest",
         "description": "A Pydantic model representing a request to run a workflow.\n\nAttributes:\n    workflow (str): The workflow to run. Default is \"current\".\n    db (list, optional): The databases to use. Default is None.\n    month (int, optional): The month to load. Required for `select` workflow. Default is None.\n    year (int, optional): The year to load. Required for `select` workflow. Default is None.\n    delta (bool, optional): If True, load only the most recent data points. Default is False.\n    download (bool, optional): If True, keeps the source data file after loading. Default is False."
+      },
+      "TaskstatusRecord": {
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Task Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "file": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "binary"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File"
+          },
+          "created": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created"
+          },
+          "updated": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated"
+          }
+        },
+        "type": "object",
+        "required": [
+          "task_id",
+          "status",
+          "file",
+          "created",
+          "updated"
+        ],
+        "title": "TaskstatusRecord",
+        "description": "A Pydantic model representing a record of a task status.\n\nAttributes:\n    task_id (UUID): A UUID4. The unique identifier of the task.\n    status (str): The status of the task.\n    file (str, optional): The file associated with the task. Default is None.\n    created (datetime, optional): The creation time of the task. Default is None.\n    updated (datetime, optional): The last update time of the task. Default is None."
       },
       "ValidationError": {
         "properties": {
