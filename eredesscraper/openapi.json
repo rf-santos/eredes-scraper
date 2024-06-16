@@ -3,7 +3,7 @@
   "info": {
     "title": "E-REDES Scraper API",
     "description": "An API to interact with the E-REDES Scraper application",
-    "version": "0.1.1.post99.dev1",
+    "version": "0.1.1.post103.dev1",
     "x-logo": {
       "url": "https://raw.githubusercontent.com/rf-santos/eredes-scraper/master/static/logo_small.jpeg"
     }
@@ -45,32 +45,24 @@
       "post": {
         "summary": "Run the scraper workflow",
         "operationId": "run_workflow_run_post",
-        "parameters": [
-          {
-            "name": "response_model",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "title": "Response Model"
-            }
-          }
-        ],
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/RunWorkflowRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowResponse"
+                }
               }
             }
           },
@@ -91,32 +83,24 @@
       "post": {
         "summary": "Run the scraper workflow asynchronously",
         "operationId": "run_workflow_async_run_async_post",
-        "parameters": [
-          {
-            "name": "response_model",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "title": "Response Model"
-            }
-          }
-        ],
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/RunWorkflowRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowAsyncResponse"
+                }
               }
             }
           },
@@ -439,7 +423,12 @@
             "type": "string",
             "title": "Workflow",
             "description": "Specify one of the supported workflows: ['current', 'previous', 'select']",
-            "default": "current"
+            "default": "current",
+            "examples": [
+              "current",
+              "previous",
+              "select"
+            ]
           },
           "db": {
             "anyOf": [
@@ -454,7 +443,12 @@
               }
             ],
             "title": "Db",
-            "description": "Specify one of the supported databases: ['influxdb']"
+            "description": "Specify one of the supported databases: ['influxdb']",
+            "examples": [
+              [
+                "influxdb"
+              ]
+            ]
           },
           "month": {
             "anyOf": [
@@ -466,7 +460,11 @@
               }
             ],
             "title": "Month",
-            "description": "Specify the month to load (1-12). [Required for `select` workflow]"
+            "description": "Specify the month to load (1-12). [Required for `select` workflow]",
+            "examples": [
+              1,
+              12
+            ]
           },
           "year": {
             "anyOf": [
@@ -478,7 +476,10 @@
               }
             ],
             "title": "Year",
-            "description": "Specify the year to load (YYYY). [Required for `select` workflow]"
+            "description": "Specify the year to load (YYYY). [Required for `select` workflow]",
+            "examples": [
+              2024
+            ]
           },
           "delta": {
             "anyOf": [
@@ -491,7 +492,11 @@
             ],
             "title": "Delta",
             "description": "Load only the most recent data points",
-            "default": false
+            "default": false,
+            "examples": [
+              false,
+              true
+            ]
           },
           "download": {
             "anyOf": [
@@ -504,7 +509,11 @@
             ],
             "title": "Download",
             "description": "If set, keeps the source data file after loading",
-            "default": false
+            "default": false,
+            "examples": [
+              false,
+              true
+            ]
           }
         },
         "type": "object",
@@ -516,11 +525,20 @@
           "task_id": {
             "type": "string",
             "format": "uuid",
-            "title": "Task Id"
+            "title": "Task Id",
+            "examples": [
+              "2a7fdc42-e55a-4215-93fa-597a12fbf38c"
+            ]
           },
           "status": {
             "type": "string",
-            "title": "Status"
+            "title": "Status",
+            "examples": [
+              "queued",
+              "running",
+              "completed",
+              "failed"
+            ]
           },
           "file": {
             "anyOf": [
@@ -532,7 +550,10 @@
                 "type": "null"
               }
             ],
-            "title": "File"
+            "title": "File",
+            "examples": [
+              "/path/to/file"
+            ]
           },
           "created": {
             "anyOf": [
@@ -544,7 +565,10 @@
                 "type": "null"
               }
             ],
-            "title": "Created"
+            "title": "Created",
+            "examples": [
+              "2024-06-16T18:20:46.570598"
+            ]
           },
           "updated": {
             "anyOf": [
@@ -556,7 +580,10 @@
                 "type": "null"
               }
             ],
-            "title": "Updated"
+            "title": "Updated",
+            "examples": [
+              "2024-06-16T18:25:46.570598"
+            ]
           }
         },
         "type": "object",
@@ -602,6 +629,133 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "WorkflowAsyncResponse": {
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Task Id",
+            "examples": [
+              "7d7a6142-68b5-4022-bd37-37c7ede379f9"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "examples": [
+              "queued",
+              "running",
+              "completed",
+              "failed"
+            ]
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail",
+            "examples": [
+              "Workflow queued successfully"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "task_id",
+          "status",
+          "detail"
+        ],
+        "title": "WorkflowAsyncResponse",
+        "description": "A Pydantic model representing an asynchronous response to a workflow request.\n\nAttributes:\n    task_id (UUID): The unique identifier of the task.\n    status (str): The status of the workflow that was requested.\n    detail (str): Additional information about the async request."
+      },
+      "WorkflowResponse": {
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Task Id",
+            "examples": [
+              "54135d06-a7e1-4d94-b7cc-ab4f014225ed"
+            ]
+          },
+          "workflow": {
+            "type": "string",
+            "title": "Workflow",
+            "examples": [
+              "current",
+              "previous",
+              "select"
+            ]
+          },
+          "databases": {
+            "items": {},
+            "type": "array",
+            "title": "Databases",
+            "examples": [
+              [
+                "influxdb"
+              ]
+            ]
+          },
+          "source_data": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "path"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Data",
+            "examples": [
+              "/path/to/source/data"
+            ]
+          },
+          "staging_area": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "path"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Staging Area",
+            "examples": [
+              "/path/to/staging/area"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "examples": [
+              "queued",
+              "running",
+              "completed",
+              "failed"
+            ]
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "examples": [
+              "2024-06-16T18:20:46.568100"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "task_id",
+          "workflow",
+          "databases",
+          "source_data",
+          "staging_area",
+          "status",
+          "timestamp"
+        ],
+        "title": "WorkflowResponse"
       }
     }
   }

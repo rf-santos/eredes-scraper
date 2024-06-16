@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 from uuid import UUID, uuid4
 from pathlib import Path
@@ -93,19 +93,19 @@ class WorkflowAsyncResponse(BaseModel):
         status (str): The status of the workflow that was requested.
         detail (str): Additional information about the async request.
     """
-    task_id: UUID = Field(examples=uuid4())
-    status: str = Field(examples="queued")
-    detail: str = Field(examples="Workflow queued successfully")
+    task_id: UUID = Field(examples=[uuid4()])
+    status: str = Field(examples=["queued", "running", "completed", "failed"])
+    detail: str = Field(examples=["Workflow queued successfully"])
 
 
 class WorkflowResponse(BaseModel):
-    task_id: UUID = Field(examples=uuid4())
-    workflow: str = Field(examples="select")
-    databases: list = Field(examples=["influxdb"])
-    source_data: Path | None = Field(examples=Path("source_data.csv"))
-    staging_area: Path | None = Field(examples=Path("staging_area"))
-    status: str = Field(examples="completed")
-    timestamp: datetime = Field(examples=datetime.now())
+    task_id: UUID = Field(examples=[uuid4()])
+    workflow: str = Field(examples=supported_workflows)
+    databases: list = Field(examples=[supported_databases])
+    source_data: Path | None = Field(examples=["/path/to/source/data"])
+    staging_area: Path | None = Field(examples=["/path/to/staging/area"])
+    status: str = Field(examples=["queued", "running", "completed", "failed"])
+    timestamp: datetime = Field(examples=[datetime.now()])
 
 
 class RunWorkflowRequest(BaseModel):
@@ -120,12 +120,12 @@ class RunWorkflowRequest(BaseModel):
         delta (bool, optional): If True, load only the most recent data points. Default is False.
         download (bool, optional): If True, keeps the source data file after loading. Default is False.
     """
-    workflow: str = Query("current", description=f"Specify one of the supported workflows: {supported_workflows}")
-    db: Optional[list[str]] = Query(None, description=f"Specify one of the supported databases: {supported_databases}")
-    month: Optional[int] = Query(None, description="Specify the month to load (1-12). [Required for `select` workflow]")
-    year: Optional[int] = Query(None, description="Specify the year to load (YYYY). [Required for `select` workflow]")
-    delta: Optional[bool] = Query(False, description="Load only the most recent data points")
-    download: Optional[bool] = Query(False, description="If set, keeps the source data file after loading")
+    workflow: str = Query("current", description=f"Specify one of the supported workflows: {supported_workflows}", examples=supported_workflows)
+    db: Optional[list[str]] = Query(None, description=f"Specify one of the supported databases: {supported_databases}", examples=[supported_databases])
+    month: Optional[int] = Query(None, description="Specify the month to load (1-12). [Required for `select` workflow]", examples=[1, 12])
+    year: Optional[int] = Query(None, description="Specify the year to load (YYYY). [Required for `select` workflow]", examples=[2024])
+    delta: Optional[bool] = Query(False, description="Load only the most recent data points", examples=[False, True])
+    download: Optional[bool] = Query(False, description="If set, keeps the source data file after loading", examples=[False, True])
 
 
 class WorkflowRequestRecord(BaseModel):
@@ -141,13 +141,13 @@ class WorkflowRequestRecord(BaseModel):
         delta (bool, optional): If True, only the most recent data points were loaded. Default is False.
         download (bool, optional): If True, the source data file was kept after loading. Default is False.
     """
-    task_id: UUID
-    workflow: str
-    db: Optional[list]
-    month: Optional[int]
-    year: Optional[int]
-    delta: Optional[bool]
-    download: Optional[bool]
+    task_id: UUID = Field(examples=[uuid4()])
+    workflow: str = Field(examples=supported_workflows)
+    db: Optional[list] = Field(examples=[supported_databases])
+    month: Optional[int] = Field(examples=[1, 12])
+    year: Optional[int] = Field(examples=[2024])
+    delta: Optional[bool] = Field(examples=[False, True])
+    download: Optional[bool] = Field(examples=[False, True])
 
 
 class TaskstatusRecord(BaseModel):
@@ -161,11 +161,11 @@ class TaskstatusRecord(BaseModel):
         created (datetime, optional): The creation time of the task. Default is None.
         updated (datetime, optional): The last update time of the task. Default is None.
     """
-    task_id: UUID
-    status: str
-    file: Optional[bytes]
-    created: Optional[datetime]
-    updated: Optional[datetime]
+    task_id: UUID = Field(examples=[uuid4()])
+    status: str = Field(examples=["queued", "running", "completed", "failed"])
+    file: Optional[bytes] = Field(examples=["/path/to/file"])
+    created: Optional[datetime] = Field(examples=[datetime.now()])
+    updated: Optional[datetime] = Field(examples=[datetime.now() + timedelta(minutes=5)])
 
 
 class ConfigLoadRequest(BaseModel):

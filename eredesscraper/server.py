@@ -2,12 +2,16 @@ import uvicorn
 
 from eredesscraper.backend import db_path
 from eredesscraper.utils import db_conn
+from eredesscraper.api import app
 
 
-def start_api_server(port: int = 8778, host: str = "localhost", reload: bool = True, debug: bool = False):
+def start_api_server(port: int = 8778, host: str = "localhost", reload: bool = True, debug: bool = False,
+                     headless: bool = True):
     db_active = db_conn(db_path.absolute().as_posix())
 
     assert db_active, "Database connection failed. Please check the connection and try again."
+
+    app.state.headless = headless
 
     uvicorn.run("eredesscraper.api:app", host=host, port=port, log_level="debug" if debug else "info", reload=reload)
 

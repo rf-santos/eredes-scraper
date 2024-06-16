@@ -58,7 +58,8 @@ def run_workflow_task(task_id: uuid4, config_path: Path, name: str, db: list, mo
             delta=delta,
             keep=keep,
             quiet=True,
-            uuid=task_id
+            uuid=task_id,
+            headless=app.state.headless
 
         )
 
@@ -86,8 +87,8 @@ def get_info():
     return {"workflows": supported_workflows, "databases": supported_databases}
 
 
-@app.post("/run", summary="Run the scraper workflow")
-def run_workflow(request: RunWorkflowRequest, ddb=Depends(get_db), response_model=WorkflowResponse):
+@app.post("/run", summary="Run the scraper workflow", response_model=WorkflowResponse)
+def run_workflow(request: RunWorkflowRequest, ddb=Depends(get_db)):
     if not config_path.exists():
         raise HTTPException(status_code=404, detail="Config file not found. Please load it first.")
 
@@ -121,7 +122,8 @@ def run_workflow(request: RunWorkflowRequest, ddb=Depends(get_db), response_mode
             delta=request.delta,
             keep=True if request.download else False,
             quiet=True,
-            uuid=task_id
+            uuid=task_id,
+            headless=app.state.headless
         )
     except Exception as e:
         ts = TaskstatusRecord(task_id=task_id,
@@ -147,10 +149,10 @@ def run_workflow(request: RunWorkflowRequest, ddb=Depends(get_db), response_mode
         return FileResponse(result.source_data, media_type="application/octet-stream",
                             filename=result.source_data.name)
     else:
-        return response_model(
+        return WorkflowResponse(
             task_id=task_id,
             workflow=request.workflow,
-            databases=request.db,
+            databases=request.db or [],
             source_data=result.source_data,
             staging_area=result.staging_area,
             status=ts.status,
@@ -158,8 +160,8 @@ def run_workflow(request: RunWorkflowRequest, ddb=Depends(get_db), response_mode
         )
 
 
-@app.post("/run_async", summary="Run the scraper workflow asynchronously")
-def run_workflow_async(background_tasks: BackgroundTasks, request: RunWorkflowRequest, ddb=Depends(get_db), response_model=WorkflowAsyncResponse):
+@app.post("/run_async", summary="Run the scraper workflow asynchronously", response_model=WorkflowAsyncResponse)
+def run_workflow_async(background_tasks: BackgroundTasks, request: RunWorkflowRequest, ddb=Depends(get_db)):
     if not config_path.exists():
         raise HTTPException(status_code=404, detail="Config file not found. Please load it first.")
 
@@ -197,7 +199,9 @@ def run_workflow_async(background_tasks: BackgroundTasks, request: RunWorkflowRe
             ddb=ddb
         )
 
-        return response_model(**{"task_id": task_id, "status": ts.status, "detail": "Workflow queued successfully"})
+        return WorkflowAsyncResponse(task_id=task_id, 
+                                     status=ts.status, 
+                                     detail="Workflow queued successfully")
 
 
     except Exception as e:

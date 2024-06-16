@@ -219,6 +219,7 @@ def server(
                                               help="[⚠ Breaks workflow. Only for debugging] Enable auto-reload"),
         debug: Optional[bool] = typer.Option(False, "--debug", "-d",
                                              help="[⚠ Only for debugging] Enable debug mode"),
+        headless: Optional[bool] = typer.Option(True, "--headless", "-H", help="Disable headless mode"),
         storage: Optional[str] = typer.Option(db_path.parent.absolute().as_posix(), "--storage", "-S",
                                               help="Specify the storage path to persist the API state")):
     """Start the application webserver"""
@@ -236,7 +237,7 @@ def server(
         typer.echo("Starting the webserver...")
         typer.echo(f"Running in stateful mode. This will persist data in {storage}")
 
-    start_api_server(port=port, host=host, reload=reload, debug=debug)
+    start_api_server(port=port, host=host, reload=reload, debug=debug, headless=headless)
 
 
 if __name__ == "__main__":
