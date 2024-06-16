@@ -166,6 +166,7 @@ class TaskstatusRecord(BaseModel):
     file: Optional[bytes] = Field(examples=["/path/to/file"])
     created: Optional[datetime] = Field(examples=[datetime.now()])
     updated: Optional[datetime] = Field(examples=[datetime.now() + timedelta(minutes=5)])
+    error_message: Optional[str] = Field(examples=["Error message"])
 
 
 class ConfigLoadRequest(BaseModel):

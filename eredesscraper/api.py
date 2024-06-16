@@ -127,10 +127,11 @@ def run_workflow(request: RunWorkflowRequest, ddb=Depends(get_db)):
         )
     except Exception as e:
         ts = TaskstatusRecord(task_id=task_id,
-                              status=f"failed: {str(e)}",
+                              status="failed",
                               file=None,
                               created=None,
-                              updated=datetime.now())
+                              updated=datetime.now(),
+                              error_message=str(e))
 
         ddb.update_taskstatus(ts)
 
