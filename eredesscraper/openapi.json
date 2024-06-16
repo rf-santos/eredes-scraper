@@ -3,7 +3,7 @@
   "info": {
     "title": "E-REDES Scraper API",
     "description": "An API to interact with the E-REDES Scraper application",
-    "version": "0.1.1.post103.dev1",
+    "version": "0.1.1.post105.dev1",
     "x-logo": {
       "url": "https://raw.githubusercontent.com/rf-santos/eredes-scraper/master/static/logo_small.jpeg"
     }
@@ -527,7 +527,7 @@
             "format": "uuid",
             "title": "Task Id",
             "examples": [
-              "2a7fdc42-e55a-4215-93fa-597a12fbf38c"
+              "76666dbe-9e95-4c77-b484-f7a410c19bd2"
             ]
           },
           "status": {
@@ -567,7 +567,7 @@
             ],
             "title": "Created",
             "examples": [
-              "2024-06-16T18:20:46.570598"
+              "2024-06-16T20:11:53.671780"
             ]
           },
           "updated": {
@@ -582,7 +582,21 @@
             ],
             "title": "Updated",
             "examples": [
-              "2024-06-16T18:25:46.570598"
+              "2024-06-16T20:16:53.671780"
+            ]
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message",
+            "examples": [
+              "Error message"
             ]
           }
         },
@@ -592,7 +606,8 @@
           "status",
           "file",
           "created",
-          "updated"
+          "updated",
+          "error_message"
         ],
         "title": "TaskstatusRecord",
         "description": "A Pydantic model representing a record of a task status.\n\nAttributes:\n    task_id (UUID): A UUID4. The unique identifier of the task.\n    status (str): The status of the task.\n    file (str, optional): The file associated with the task. Default is None.\n    created (datetime, optional): The creation time of the task. Default is None.\n    updated (datetime, optional): The last update time of the task. Default is None."
@@ -637,7 +652,7 @@
             "format": "uuid",
             "title": "Task Id",
             "examples": [
-              "7d7a6142-68b5-4022-bd37-37c7ede379f9"
+              "7f382b2d-b096-41b5-bd65-600548403f4b"
             ]
           },
           "status": {
@@ -674,7 +689,7 @@
             "format": "uuid",
             "title": "Task Id",
             "examples": [
-              "54135d06-a7e1-4d94-b7cc-ab4f014225ed"
+              "d4bba55a-ce03-4058-8a7a-253d456d466a"
             ]
           },
           "workflow": {
@@ -741,7 +756,7 @@
             "format": "date-time",
             "title": "Timestamp",
             "examples": [
-              "2024-06-16T18:20:46.568100"
+              "2024-06-16T20:11:53.666780"
             ]
           }
         },

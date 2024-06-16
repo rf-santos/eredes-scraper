@@ -8,7 +8,7 @@ from eredesscraper.utils import *
 def test_parse_readings_influx():
     file_path = Path(__file__).parent / 'example.xlsx'
     cpe_code = 'PT00############04TW'
-    df = parse_readings_influx(file_path, cpe_code)
+    df = readings2df(file_path, cpe_code)
     assert df is not None
     assert 'cpe' in df.columns
     assert 'consumption' in df.columns

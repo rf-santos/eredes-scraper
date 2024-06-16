@@ -23,9 +23,10 @@ config_schema = files("eredesscraper").joinpath("config_schema.yml")
 config_schema_path = Path(str(config_schema)).resolve()
 
 
-def parse_readings_influx(file_path: Path, cpe_code: str) -> pd.DataFrame:
+def readings2df(file_path: Path, cpe_code: str, ts2idx: bool = True) -> pd.DataFrame:
     """
-    The `parse_readings_influx` function takes a XLSX file path retrieved from E-REDES and returns
+    Convert readings from an Excel file to a pandas DataFrame.
+    The function takes a XLSX file path retrieved from E-REDES and returns
     a pandas DataFrame with the parsed data.
     An example for the retrieved file can be found in the `tests` folder.
     TZ is set to Europe/Lisbon
@@ -35,12 +36,13 @@ def parse_readings_influx(file_path: Path, cpe_code: str) -> pd.DataFrame:
     - The Date is "date", the Time is "time", the Value is "consumption"
     - The "date" and "time" columns are merged into a single column named "date_time"
 
-    :param file_path: Specify the Excel (.XLSX) file path of the file to be parsed
-    :type file_path: pathlib.Path
-    :param cpe_code: Specify the CPE code to be added to the DataFrame
-    :type cpe_code: str
-    :return: A pandas DataFrame with the parsed data
-    :doc-author: Ricardo Filipe dos Santos
+    Args:
+        file_path (Path): The path to the Excel file.
+        cpe_code (str): The CPE code to be added to all rows.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the converted readings.
+
     """
 
     df = pd.read_excel(
@@ -59,7 +61,8 @@ def parse_readings_influx(file_path: Path, cpe_code: str) -> pd.DataFrame:
 
     # add the date_time column
     df['date_time'] = df['date_time'].dt.tz_localize(UTC)
-    df.set_index('date_time', inplace=True)
+    if ts2idx:
+        df.set_index('date_time', inplace=True)
 
     return df
 

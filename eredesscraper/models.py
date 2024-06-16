@@ -223,6 +223,20 @@ class InfluxDB(BaseModel):
     token: str
 
 
+class DuckDB(BaseModel):
+    """
+    Represents a connection to a DuckDB database.
+
+    Attributes:
+        db_path (str): The path to the DuckDB database file.
+        db_name (str): The name of the DuckDB database.
+        table (str): The name of the table in the DuckDB database.
+    """
+    db_path: Optional[str]
+    db_name: Optional[str]
+    table: Optional[str]
+
+
 class Config(BaseModel):
     """
     Represents the configuration settings for the application.
@@ -233,3 +247,4 @@ class Config(BaseModel):
     """
     eredes: Eredes
     influxdb: InfluxDB
+    duckdb: DuckDB

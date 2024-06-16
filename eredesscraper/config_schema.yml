@@ -22,3 +22,12 @@ mapping:
         type: str
       token:
         type: str
+  duckdb:
+    type: map
+    mapping:
+      db_path:
+        type: str
+      db_name:
+        type: str
+      table:
+        type: str

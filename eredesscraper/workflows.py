@@ -7,7 +7,7 @@ from uuid import uuid4
 import typer
 
 from eredesscraper.agent import EredesScraper
-from eredesscraper.db_clients import InfluxDB
+from eredesscraper.db_clients import Sink2InfluxDB, Sink2DuckDB
 from eredesscraper.utils import parse_config, flatten_config
 from eredesscraper.models import ERSSession
 from eredesscraper.logger import logger
@@ -115,7 +115,7 @@ def switchboard(config_path: Path, name: str, db: None | list = None, month: int
     for conn in db:
         match conn:
             case 'influxdb':
-                client = InfluxDB(
+                client = Sink2InfluxDB(
                     token=config['influxdb']['token'],
                     org=config['influxdb']['org'],
                     host=config['influxdb']['host'],
@@ -126,6 +126,18 @@ def switchboard(config_path: Path, name: str, db: None | list = None, month: int
                 client.load(source_data=bot.dwnl_file, cpe_code=config['eredes']['cpe'], delta=delta)
                 if not quiet:
                     typer.echo(f"📈\tLoaded data from {bot.dwnl_file} into the InfluxDB database")
+            
+            case 'duckdb':
+                client = Sink2DuckDB(
+                    db_path=config['duckdb']['db_path'] if 'db_path' in config['duckdb'] else None,
+                    db=config['duckdb']['db_name'] if 'db' in config['duckdb'] else None,
+                    table=config['duckdb']['table'] if 'table' in config['duckdb'] else None,
+                    quiet=quiet)
+                client.connect()
+                client.load(source_data=bot.dwnl_file, cpe_code=config['eredes']['cpe'], delta=delta)
+                if not quiet:
+                    typer.echo(f"📈\tLoaded data from {bot.dwnl_file} into the DuckDB database")
+
             case None:
                 pass
 
